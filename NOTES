@@ -1,1 +1,16 @@
 Un-initialized variable is set to (null) which is Python None
+
+LINE CONTINUATION:
+PARTIAL_STATEMENT\
+PARTIAL_STATEMENT\
+PARTIAL_STATEMENT\
+
+
+Add a space after \ if you want a comment
+STATEMENT\ \# MULTI
+LINE
+COMMENT \#
+REST\
+
+STATEMENT\ # SINGLE LINE COMMENT
+REST
