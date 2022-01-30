@@ -1,0 +1,71 @@
+# Comments
+# skflskfglkdgl;kdlgk;lgdklh2uiowy eufajvghjkio;hfs
+
+
+# I/O
+write(var0, var1, ..., varn)
+write('{}', name)
+write('${name}')
+
+
+read(var0, var1, ..., varn)
+read('{}', name)
+read('${name}')
+
+# Variables and Constants
+# Data types
+int float string array
+
+# Variable/Constant declaration
+[ const ] data_type names [= values][;]
+const int x, y, z = 123, -1234, 49345
+float a, b, c = 0.34, 123.94345, 1.492348;
+
+# Control Flow
+# If statement
+if condition [['is'] 'true' ['do' | 'then']] [:]
+  statement(s)
+elif condition1 [['is'] 'true' ['do' | 'then']] [:]
+  statement(s)
+.
+.
+.
+else ['do' | 'then'][:]
+  statement(s)
+end ["if condition"]
+
+# match statement
+match name:
+  case val0 | val1 | ... | valn[:]
+    statement(s)
+  case (x0 & x1) | (x2)[:]
+    statement(s)
+  .
+  .
+  .
+  ['default' | 'else'][:]
+    statement(s)
+end "match name"
+
+# while
+while condition [['is'] 'true' ['do' | 'then']] [:]
+  statement(s)
+end "while condition"
+
+# foreach
+foreach names in iterable [ 'do' ] [:]
+  statement(s)
+end "foreach"
+
+# Function definite-declaration
+function function_name([ paramter [,] ] *) [ 'returns' | '->' ] data_type => {
+  statement(s)
+}
+paramter: [ 'const' ] data_type name
+
+# Operators
++ - * / mod **
+~ >> << | &
+< <= > >= == !=
+not and or 
++ string concatenation
