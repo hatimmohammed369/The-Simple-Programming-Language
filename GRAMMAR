@@ -9,7 +9,7 @@
 SINGLE_LINE_COMMENT: '#' THING
 MULTI_LINE_COMMENT: '##' THING '##'
 
-DATATYPE: 'int' | 'float' | 'string' | 'boolean' | 'array'
+DATATYPE: 'int' | 'float' | 'string' | 'boolean' | 'array' | 'null'
 # Up to now arrays are static
 # array s[3] = [0, 1, 2]
 ARRAY_DECLARATION: array NAME [ '[' POSITIVE_INTEGER ']' ] [ '=' '[' THING [ ',' THING ]* ']' ] [ ';' ]
