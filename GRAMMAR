@@ -6,8 +6,7 @@
 # THING: context depedent, for instance const string s = THING;
 # THING here refers to an arbitrary srting
 
-SINGLE_LINE_COMMENT: '#' THING
-MULTI_LINE_COMMENT: '\#' THING '\#'
+COMMENT: '#' THING
 
 DATATYPE: 'int' | 'float' | 'string' | 'boolean' | 'array' | 'null'
 # Up to now arrays are static
@@ -47,4 +46,19 @@ write("{} sfkdlgkl; {} dgjkjdgk" % n0 n1 ... nn)
 #
 #
 read("{} sfkdlgkl; {} dgjkjdgk" % n0 n1 ... nn)
+#
+#
+# Add a space after \ if you want a comment
+# STATEMENT\ \# MULTI
+# LINE
+# COMMENT \#
+# REST\
+# 
+# STATEMENT\ # SINGLE LINE COMMENT
+# REST
+#
+#
+#
+#
+#
 #
