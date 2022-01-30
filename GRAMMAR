@@ -1,0 +1,4 @@
+DATATYPE: 'int' | 'float' | 'string' | 'boolean' | 'array'
+
+# Up to now arrays are static
+
