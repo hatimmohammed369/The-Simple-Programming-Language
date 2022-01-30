@@ -1,13 +1,4 @@
 # this is a single line comment
-## this
-    is
-    a
-    multi
-    line
-    comment##
-
-##fkdkgkdjgkgjkd
-##
 
 # un-initialized, x is null
 const string x;
