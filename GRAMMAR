@@ -7,7 +7,7 @@
 # THING here refers to an arbitrary srting
 
 SINGLE_LINE_COMMENT: '#' THING
-MULTI_LINE_COMMENT: '\#' THING '\#'
+MULTI_LINE_COMMENT: '##' THING '##'
 
 DATATYPE: 'int' | 'float' | 'string' | 'boolean' | 'array'
 # Up to now arrays are static
