@@ -6,7 +6,7 @@
 # THING: context depedent, for instance const string s = THING;
 # THING here refers to an arbitrary srting
 
-SINGLE_LINE_COMMENT: '##' THING
+SINGLE_LINE_COMMENT: '#' THING
 MULTI_LINE_COMMENT: '\#' THING '\#'
 
 DATATYPE: 'int' | 'float' | 'string' | 'boolean' | 'array'
