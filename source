@@ -48,7 +48,7 @@ function while_fib(int n) returns int => {
 
 int j = 0;
 while true
-  branch n:
+  match n:
     case 5:
       continue "while true"
     case 10:
