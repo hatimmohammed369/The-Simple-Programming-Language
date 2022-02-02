@@ -77,6 +77,7 @@ followers = {
 int_pattern = re.compile(r'[+-]{0,1}\d+([eE][+-]{0,1}\d+){0,1}')
 float_pattern = re.compile(r'[+-]{0,1}\d+[.]\d*([eE][+-]{0,1}\d+){0,1}|[+-]{0,1}\d*[.]\d+([eE][+-]{0,1}\d+){0,1}')
 number_pattern = re.compile(float_pattern.pattern + '|' + int_pattern.pattern)
+string_pattern = re.compile(r"[f]{0,1}'.*'[^']")
 
 class Tokenizer:
     def __init__(self, text: str):
@@ -226,7 +227,7 @@ if len(argv) == 2 and argv[1].lower() == '-f':
     pass
 else:
     source = """
-    function my_function(int x = 12, float y = -123.e+12, const string x = "Hey") returns int => {
+    function my_function(int x := 12, float y := -123.e+12, const string x := "Hey") returns int => {
         return x + int(y) + len(x);
     }
     """
