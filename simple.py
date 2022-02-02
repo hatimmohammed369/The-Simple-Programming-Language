@@ -28,7 +28,7 @@ class Token:
     __str__ = __repr__
 
 language_words = ['const', 'int', 'float', 'string', 'array', 'null',
-                  'if', 'while', 'foreach', 'match', 
+                  'if', 'while', 'foreach', 'match', 'end',
                   'function', 'return', 'returns']
 
 punctuation = [';', ':', ',', '[', ']', '{', '}', '(', ')', ':=', '=', '=>', '+', '-', '*', '**', '/', '//', '%', '~', '&', '|', '>>', '<<',
