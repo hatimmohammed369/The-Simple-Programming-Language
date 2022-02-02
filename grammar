@@ -64,6 +64,7 @@ function function_name([ paramter [,] ] *) [ 'returns' | '->' ] data_type => {
 paramter: [ 'const' ] data_type name
 
 # Operators
+= :=
 + - * / mod **
 ~ >> << | &
 < <= > >= == !=
