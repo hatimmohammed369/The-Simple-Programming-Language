@@ -88,22 +88,6 @@ class Tokenizer:
             self.idx, self.ln, self.col = 0, 0, 0
             self.current_char = self.text[0]
 
-    def advance(self):
-        # move forward one charater
-        if self.idx+1 < len(self.text):
-            # we still have text left
-            self.idx += 1
-            self.current_char = self.text[self.idx]
-            # check if it's line beginning
-            if 0 <= self.idx - 1 and self.text[self.idx - 1] == '\n':
-                self.col = 0
-                self.ln += 1
-        else:
-            # End Of File
-            self.col = self.idx = len(self.text)
-            self.current_char = ''
-        return self
-
     @snoop
     def next_token(self) -> Token | None:
         token = None
