@@ -223,7 +223,10 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in tokens:
             print(t)
 else:
-    source = argv[1]
+    source = """
+    write(f'####this is a formatted string {x}####')
+    string s = '   const string x = 'const char y = 'A'; ';int x = 123;   '
+    """
     print('source: %s' % source)
     tokens = list(Tokenizer(source).tokenize())
     for t in tokens:
