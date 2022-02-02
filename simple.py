@@ -122,6 +122,19 @@ class Tokenizer:
                 self.col += len(token.value)
                 token.pos_end = Pos(token.pos_begin.idx+len(token.value), token.pos_begin.col+len(token.value), self.ln)
 
+            elif string := string_pattern.search(string=self.text, pos=self.idx):
+                match_value = string.group()
+                token = Token(name='f-string' if match_value[0] == 'f' else 'string', value=match_value)
+                begin = Pos(self.idx, self.col, self.ln)
+                token.pos_begin = begin
+                self.idx = string.end()
+                self.col += len(token.value)
+                if self.idx < len(self.text):
+                    self.current_char = self.text[self.idx]
+                else:
+                    self.current_char = ''
+                token.pos_end = Pos(begin.idx+len(token.value), begin.col+len(token.value), begin.ln)
+
             elif re.match(pattern=r'[_a-zA-Z]', string=self.current_char):
                 # an identifier or a keyword, search for nearest delimiter, (any non-identifier character)
                 next_delimiter = re.compile(r'[^_0-9a-zA-Z]').search(string=self.text, pos=self.idx)
@@ -212,6 +225,7 @@ if len(argv) == 2 and argv[1].lower() == '-f':
 else:
     source = """
     function my_function(int x := 12, float y := -123.e+12, const string x := "Hey") returns int => {
+        write(f'this is a formatted string {x}, '{another_name_here}' ')
         return x + int(y) + len(x);
     }
     """
