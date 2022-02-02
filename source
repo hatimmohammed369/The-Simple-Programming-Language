@@ -6,7 +6,7 @@ const string x;
 # semi-colon is optional
 write(x)
 
-x = 'Hello' + " " + 'world!';
+x = "Hello" + " " + "world!";
 write("{} is a string, {} is also a number" % x 123456)
 write("{} is a string, {} is also a number", x, 123456)
 
