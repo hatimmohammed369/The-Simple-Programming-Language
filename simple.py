@@ -77,7 +77,7 @@ followers = {
 int_pattern = re.compile(r'[+-]{0,1}\d+([eE][+-]{0,1}\d+){0,1}')
 float_pattern = re.compile(r'[+-]{0,1}\d+[.]\d*([eE][+-]{0,1}\d+){0,1}|[+-]{0,1}\d*[.]\d+([eE][+-]{0,1}\d+){0,1}')
 number_pattern = re.compile(float_pattern.pattern + '|' + int_pattern.pattern)
-string_pattern = re.compile(r"[f]{0,1}'.*'")
+string_pattern = re.compile(r"[f]{0,1}[\"'].*?[\"']")
 
 class Tokenizer:
     def __init__(self, text: str):
@@ -216,19 +216,14 @@ class Tokenizer:
 
 # run
 from sys import argv
-if len(argv) == 2 and argv[1].lower() == '-f':
+if len(argv) == 3 and argv[1].lower() == '-f':
     with open(argv[2], 'r') as source_file:
         source = str(source_file.read())
         tokens = list(Tokenizer(source).tokenize())
-        print(tokens)
-    pass
+        for t in tokens:
+            print(t)
 else:
-    source = """
-    function my_function(int x := 12, float y := -123.e+12, const string x := "Hey") returns int => {
-        write(f'####this is a formatted string {x}####')
-        return x + int(y) + len(x);
-    }
-    """
+    source = argv[1]
     print('source: %s' % source)
     tokens = list(Tokenizer(source).tokenize())
     for t in tokens:
