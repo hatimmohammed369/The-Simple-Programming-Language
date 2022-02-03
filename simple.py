@@ -193,7 +193,8 @@ class Tokenizer:
                             nearest_new_line_forwards = len(self.text)
 
                         current_line = self.text[nearest_new_line_backwards:nearest_new_line_forwards]
-                        error = current_line + '\n' + (' ' * self.col) + '^' + 'Constant re-assignment\n'
+                        error = current_line + '\n' + (' ' * self.col + len(token.value)-1) + \
+                            '^' + 'Constant re-assignment\n'
                         return None, error
                 
                 self.idx += len(token.value)
@@ -239,8 +240,10 @@ class Tokenizer:
     def __iter__(self):
         while True:
             t, e = self.next_token()
-            if t is not None and e is not None:
-                yield t
+            if e is not None:
+                print(e)
+                exit(0)
+            yield t
             if self.current_char == '':
                 break
 ####################################################################################################
@@ -253,6 +256,6 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in Tokenizer(source):
             print(t)
 else:
-    source = 'const int x := 123;'
+    source = 'const int x:=1;x=123;'
     for t in Tokenizer(source):
         print(t)
