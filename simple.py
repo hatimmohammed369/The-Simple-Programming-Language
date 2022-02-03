@@ -27,7 +27,7 @@ class Token:
     __str__ = __repr__
 
 language_words = ['const', 'int', 'float', 'string', 'array', 'null',
-                  'if', 'while', 'foreach', 'match', 'end',
+                  'break', 'continue', 'if', 'while', 'foreach', 'match', 'case', 'end',
                   'function', 'return', 'returns']
 
 punctuation = [';', ':', ',', '[', ']', '{', '}', '(', ')', ':=', '=', '=>', '+', '-', '*', '**', '/', '//', '%', '~', '&', '|', '>>', '<<',
@@ -223,7 +223,7 @@ if len(argv) == 3 and argv[1].lower() == '-f':
 else:
     source = """
     write(f"####this is a formatted string {x}####")
-    string s = "   const string x = \\"const char y = \\"A\\"; \\";int x = 123;   "
+    string s := "   const string x = \\"const char y = \\"A\\"; \\";int x = 123;   "
     """
     print('source:\n%s' % source)
     tokens = list(Tokenizer(source).tokenize())
