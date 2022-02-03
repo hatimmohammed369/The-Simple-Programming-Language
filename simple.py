@@ -77,7 +77,7 @@ followers = {
 int_pattern = re.compile(r'[+-]{0,1}\d+([eE][+-]{0,1}\d+){0,1}')
 float_pattern = re.compile(r'[+-]{0,1}\d+[.]\d*([eE][+-]{0,1}\d+){0,1}|[+-]{0,1}\d*[.]\d+([eE][+-]{0,1}\d+){0,1}')
 number_pattern = re.compile(float_pattern.pattern + '|' + int_pattern.pattern)
-string_pattern = re.compile(r"[f]{0,1}[\"'].*?[\"']")
+string_pattern = re.compile(r'f{0,1}".*?(?<!\\)"')
 
 class Tokenizer:
     def __init__(self, text: str):
@@ -224,10 +224,10 @@ if len(argv) == 3 and argv[1].lower() == '-f':
             print(t)
 else:
     source = """
-    write(f'####this is a formatted string {x}####')
-    string s = '   const string x = 'const char y = 'A'; ';int x = 123;   '
+    write(f"####this is a formatted string {x}####")
+    string s = "   const string x = "const char y = "A"; ";int x = 123;   "
     """
-    print('source: %s' % source)
+    print('source:\n%s' % source)
     tokens = list(Tokenizer(source).tokenize())
     for t in tokens:
         print(t)
