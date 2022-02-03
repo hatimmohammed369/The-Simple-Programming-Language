@@ -88,12 +88,15 @@ class Tokenizer:
             self.idx, self.ln, self.col = 0, 0, 0
             self.current_char = self.text[0]
 
+    def pos(self):
+        return Pos(self.idx, self.col, self.ln)
+
     def next_token(self) -> Token | None:
         token = None
         if self.current_char != '': # it is not EOF
             if self.current_char == '\n':
                 # NEWLINE
-                token = Token(name='NEWLINE', value='\n', pos_begin=Pos(self.idx, self.col, self.ln))
+                token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
                 token.pos_end = Pos(self.idx+1, self.col+1, self.ln)
                 self.idx += 1
                 if self.idx < len(self.text):
@@ -107,7 +110,7 @@ class Tokenizer:
                 # COMMENT
                 next_new_line = self.text.find('\n', self.idx) # NEWLINE is the only thing that stops a comment
                 token = Token(name='COMMENT')
-                token.pos_begin = Pos(idx=self.idx, col=self.col, ln=self.ln)
+                token.pos_begin = self.pos()
                 if next_new_line != -1:
                     # this comment is not in last line
                     token.value = self.text[self.idx:next_new_line]
@@ -124,7 +127,7 @@ class Tokenizer:
             elif string := string_pattern.match(string=self.text, pos=self.idx):
                 match_value = string.group()
                 token = Token(name='f-string' if match_value[0] == 'f' else 'string', value=match_value)
-                begin = Pos(self.idx, self.col, self.ln)
+                begin = self.pos()
                 token.pos_begin = begin
                 self.idx = string.end()
                 self.col += len(token.value)
@@ -137,7 +140,7 @@ class Tokenizer:
             elif re.match(pattern=r'[_a-zA-Z]', string=self.current_char):
                 # an identifier or a keyword, search for nearest delimiter, (any non-identifier character)
                 next_delimiter = re.compile(r'[^_0-9a-zA-Z]').search(string=self.text, pos=self.idx)
-                begin = Pos(idx=self.idx, col=self.col, ln=self.ln)
+                begin = self.pos()
                 token = Token(pos_begin=begin)
                 if next_delimiter is not None:
                     # we have not reached End Of File
@@ -157,7 +160,7 @@ class Tokenizer:
                     token.name = 'NAME'
 
             elif self.current_char in punctuation:
-                begin = Pos(self.idx, self.col, self.ln)
+                begin = self.pos()
                 token = Token(pos_begin=begin)
                 if self.idx + 1 < len(self.text) and self.text[self.idx + 1] in followers:
                     # Things like :=, ==, !=, <=, <<
@@ -181,7 +184,7 @@ class Tokenizer:
             elif re.match(pattern=r'[.0-9]', string=self.current_char):
                 # A NUMBER
                 number_match = number_pattern.search(string=self.text, pos=self.idx)
-                begin =   Pos(self.idx, self.col, self.ln)
+                begin =   self.pos()
                 token =   Token(name='NUMBER', value=number_match.group(), pos_begin=begin)
                 end   =   Pos(token.pos_begin.idx + len(token.value), token.pos_begin.col + len(token.value), self.ln)
                 token.pos_end = end
@@ -222,11 +225,7 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in tokens:
             print(t)
 else:
-    source = """
-    write(f"####this is a formatted string {x}####")
-    string s := "   const string x = \\"const char y = \\"A\\"; \\";int x = 123;   "
-    """
-    print('source:\n%s' % source)
+    source = argv[1]
     tokens = list(Tokenizer(source).tokenize())
     for t in tokens:
         print(t)
