@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3.10
 
 import re
+from snoop import snoop
 
 ####################################################################################################
 
@@ -91,6 +92,12 @@ class Tokenizer:
             self.current_char = self.text[0]
         self.tokens_list: list[Token] = []
 
+    def __len__(self):
+        return len(self.tokens_list)
+
+    def __getitem__(self, key) -> Token:
+        return self.tokens_list[key]
+
     def pos(self):
         return Pos(self.idx, self.col, self.ln)
 
@@ -160,9 +167,10 @@ class Tokenizer:
                 if token.value in language_words:
                     token.name = 'KEYWORD'
                 else:
-                    if self.tokens_list[-1].name:
-                        pass
-                    token.name = 'NAME'
+                    if self[-1].name in data_types and len(self) >= 2 and self[-2].value == 'const':
+                        token.name = 'CONST_NAME'
+                    else:
+                        token.name = 'NAME'
 
             elif self.current_char in punctuation:
                 begin = self.pos()
@@ -230,6 +238,6 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in Tokenizer(source):
             print(t)
 else:
-    source = argv[1]
+    source = 'const int x := 123;'
     for t in Tokenizer(source):
         print(t)
