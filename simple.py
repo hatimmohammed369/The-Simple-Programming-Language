@@ -26,7 +26,9 @@ class Token:
         return f'Token({self.name}, {repr(self.value)}, {(begin)}-{end})'
     __str__ = __repr__
 
-language_words = ['const', 'int', 'float', 'string', 'array', 'null', 'true', 'false',
+data_types = ['int', 'float', 'string', 'boolean', 'array', 'null']
+
+language_words = ['const', 'int', 'float', 'string', 'array', 'null', 'true', 'false', 'boolean',
                   'is', 'IS', 'not', 'and', 'or',
                   'break', 'continue', 'if', 'do', 'then', 'while', 'foreach', 'match', 'case', 'end',
                   'function', 'return', 'returns']
@@ -87,6 +89,7 @@ class Tokenizer:
         if len(text) != 0:
             self.idx, self.ln, self.col = 0, 0, 0
             self.current_char = self.text[0]
+        self.tokens_list: list[Token] = []
 
     def pos(self):
         return Pos(self.idx, self.col, self.ln)
@@ -157,6 +160,8 @@ class Tokenizer:
                 if token.value in language_words:
                     token.name = 'KEYWORD'
                 else:
+                    if self.tokens_list[-1].name:
+                        pass
                     token.name = 'NAME'
 
             elif self.current_char in punctuation:
@@ -205,9 +210,10 @@ class Tokenizer:
                     self.current_char = ''
                     self.idx = len(self.text)
                 self.col += 1
+        self.tokens_list.append(token)
         return token
 
-    def tokenize(self):
+    def __iter__(self):
         while True:
             t = self.next_token()
             if t is not None:
@@ -221,11 +227,9 @@ from sys import argv
 if len(argv) == 3 and argv[1].lower() == '-f':
     with open(argv[2], 'r') as source_file:
         source = str(source_file.read())
-        tokens = list(Tokenizer(source).tokenize())
-        for t in tokens:
+        for t in Tokenizer(source):
             print(t)
 else:
     source = argv[1]
-    tokens = list(Tokenizer(source).tokenize())
-    for t in tokens:
+    for t in Tokenizer(source):
         print(t)
