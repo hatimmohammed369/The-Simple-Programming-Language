@@ -1,7 +1,6 @@
 #!/usr/local/bin/python3.10
 
 import re
-from typing import Tuple
 from snoop import snoop
 
 ####################################################################################################
@@ -92,6 +91,7 @@ class Tokenizer:
             self.idx, self.ln, self.col = 0, 0, 0
             self.current_char = self.text[0]
         self.tokens_list: list[Token] = []
+        self.identifiers_table: dict[str, list[Token]] = {}
 
     def __len__(self):
         return len(self.tokens_list)
@@ -102,7 +102,7 @@ class Tokenizer:
     def pos(self):
         return Pos(self.idx, self.col, self.ln)
 
-    def next_token(self) -> Tuple[Token | None, str | None]:
+    def next_token(self) -> tuple[Token | None, str | None]:
         token = None
         if self.current_char != '': # it is not EOF
             if self.current_char == '\n':
@@ -125,17 +125,17 @@ class Tokenizer:
                 if next_new_line != -1:
                     # this comment is not in last line
                     token.value = self.text[self.idx:next_new_line]
-                    self.idx = next_new_line
                     self.current_char = '\n'
                 else:
                     # this comment is in last line
                     token.value = self.text[self.idx:]
-                    self.idx = len(self.text)
                     self.current_char = ''
+                self.idx += len(token.value)
                 self.col += len(token.value)
                 token.pos_end = Pos(token.pos_begin.idx+len(token.value), token.pos_begin.col+len(token.value), self.ln)
 
             elif string := string_pattern.match(string=self.text, pos=self.idx):
+                # STRING
                 match_value = string.group()
                 token = Token(name='f-string' if match_value[0] == 'f' else 'string', value=match_value)
                 begin = self.pos()
@@ -149,31 +149,49 @@ class Tokenizer:
                 token.pos_end = Pos(begin.idx+len(token.value), begin.col+len(token.value), begin.ln)
 
             elif re.match(pattern=r'[_a-zA-Z]', string=self.current_char):
+                # IDENTIFIER
                 # an identifier or a keyword, search for nearest delimiter, (any non-identifier character)
                 next_delimiter = re.compile(r'[^_0-9a-zA-Z]').search(string=self.text, pos=self.idx)
-                begin = self.pos()
-                token = Token(pos_begin=begin)
+                current_identifier = ''
                 if next_delimiter is not None:
                     # we have not reached End Of File
-                    token.value = self.text[self.idx: next_delimiter.start()]
-                    self.idx = next_delimiter.start()
-                    self.current_char = self.text[self.idx]
+                    current_identifier = self.text[self.idx: next_delimiter.start()]
                 else:
                     # we reached End Of File
-                    token.value = self.text[self.idx:]
-                    self.idx = len(self.text)
-                    self.current_char = ''
+                    current_identifier = self.text[self.idx:]
+                
+                begin = self.pos()
+                token = Token(pos_begin=begin)
+                token.value = current_identifier
+                self.idx += len(token.value)
                 self.col += len(token.value)
                 token.pos_end = Pos(begin.idx+len(token.value), begin.idx+len(token.value), self.ln)
+                
+                if self.idx < len(self.text):
+                    self.current_char = self.text[self.idx]
+                else:
+                    # End Of File
+                    self.current_char = ''
+                
                 if token.value in language_words:
                     token.name = 'KEYWORD'
                 else:
                     if self[-1].value in data_types and len(self) >= 2 and self[-2].value == 'const':
+                        # things like: const boolean p := true;
                         token.name = 'CONST_NAME'
                     else:
                         token.name = 'NAME'
+                
+                if current_identifier in self.identifiers_table:
+                    # we met this identifier before
+                    # first check for possible errors
+                    pass
+                else:
+                    # A new identifier
+                    self.identifiers_table[token.value] = [token]
 
             elif self.current_char in punctuation:
+                # SOMETHING LIKE *, +, {, %, ;, .....
                 begin = self.pos()
                 token = Token(pos_begin=begin)
                 if self.idx + 1 < len(self.text) and self.text[self.idx + 1] in followers:
@@ -187,13 +205,13 @@ class Tokenizer:
                         nearest_new_line_backwards = self.text.rfind('\n', 0, self.idx)
                         if nearest_new_line_backwards == -1:
                             nearest_new_line_backwards = 0
-
+                        
                         nearest_new_line_forwards = self.text.find('\n', self.idx)
                         if nearest_new_line_forwards == -1:
                             nearest_new_line_forwards = len(self.text)
-
+                        
                         current_line = self.text[nearest_new_line_backwards:nearest_new_line_forwards]
-                        error = current_line + '\n' + (' ' * self.col + len(token.value)-1) + \
+                        error = current_line + '\n' + (' ' * (self.col + len(token.value)-1)) + \
                             '^' + 'Constant re-assignment\n'
                         return None, error
                 
@@ -234,7 +252,9 @@ class Tokenizer:
                     self.idx = len(self.text)
                 self.col += 1
         if token is not None:
+            # we have a valid token
             self.tokens_list.append(token)
+            self.identifiers_table[token.value].append(token)
         return token, None
 
     def __iter__(self):
