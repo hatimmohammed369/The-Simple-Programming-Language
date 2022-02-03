@@ -218,7 +218,8 @@ class Tokenizer:
                     self.current_char = ''
                     self.idx = len(self.text)
                 self.col += 1
-        self.tokens_list.append(token)
+        if token is not None:
+            self.tokens_list.append(token)
         return token
 
     def __iter__(self):
