@@ -214,8 +214,8 @@ class Tokenizer:
                             nearest_new_line_forwards = len(self.text)
                         
                         current_line = self.text[nearest_new_line_backwards:nearest_new_line_forwards]
-                        error = current_line + '\n' + (' ' * (self.col + 1)) + \
-                            '^\n' + (' ' * (self.col + 1)) + 'Constant re-assignment\n'
+                        error = '\nConstant re-assignment error:\n' + current_line + '\n' + (' ' * self.col)
+                        error += '^\n' + (' ' * self.col) + f'Constant ({self[-1].value}) re-assignment\n'
                         return None, error
                 
                 self.idx += len(token.value)
