@@ -182,13 +182,13 @@ class Tokenizer:
                     else:
                         token.name = 'NAME'
                 
-                if current_identifier in self.identifiers_table:
-                    # we met this identifier before
-                    # first check for possible errors
-                    self.identifiers_table[token.value].append(token)
-                else:
-                    # A new identifier
-                    self.identifiers_table[token.value] = [token]
+                    if current_identifier in self.identifiers_table:
+                        # we met this identifier before
+                        # first check for possible errors
+                        self.identifiers_table[token.value].append(token)
+                    else:
+                        # A new identifier
+                        self.identifiers_table[token.value] = [token]
 
             elif self.current_char in punctuation:
                 # SOMETHING LIKE *, +, {, %, ;, .....
