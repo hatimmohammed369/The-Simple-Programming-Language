@@ -167,7 +167,7 @@ class Tokenizer:
                 if token.value in language_words:
                     token.name = 'KEYWORD'
                 else:
-                    if self[-1].name in data_types and len(self) >= 2 and self[-2].value == 'const':
+                    if self[-1].value in data_types and len(self) >= 2 and self[-2].value == 'const':
                         token.name = 'CONST_NAME'
                     else:
                         token.name = 'NAME'
