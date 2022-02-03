@@ -1,7 +1,6 @@
 #!/usr/local/bin/python3.10
 
 import re
-from snoop import snoop
 
 ####################################################################################################
 
@@ -88,7 +87,6 @@ class Tokenizer:
             self.idx, self.ln, self.col = 0, 0, 0
             self.current_char = self.text[0]
 
-    @snoop
     def next_token(self) -> Token | None:
         token = None
         if self.current_char != '': # it is not EOF
@@ -122,7 +120,7 @@ class Tokenizer:
                 self.col += len(token.value)
                 token.pos_end = Pos(token.pos_begin.idx+len(token.value), token.pos_begin.col+len(token.value), self.ln)
 
-            elif string := string_pattern.search(string=self.text, pos=self.idx):
+            elif string := string_pattern.match(string=self.text, pos=self.idx):
                 match_value = string.group()
                 token = Token(name='f-string' if match_value[0] == 'f' else 'string', value=match_value)
                 begin = Pos(self.idx, self.col, self.ln)
@@ -225,7 +223,7 @@ if len(argv) == 3 and argv[1].lower() == '-f':
 else:
     source = """
     write(f"####this is a formatted string {x}####")
-    string s = "   const string x = "const char y = "A"; ";int x = 123;   "
+    string s = "   const string x = \\"const char y = \\"A\\"; \\";int x = 123;   "
     """
     print('source:\n%s' % source)
     tokens = list(Tokenizer(source).tokenize())
