@@ -176,19 +176,18 @@ class Tokenizer:
                 if token.value in language_words:
                     token.name = 'KEYWORD'
                 else:
-                    if self[-1].value in data_types and len(self) >= 2 and self[-2].value == 'const':
-                        # things like: const boolean p := true;
-                        token.name = 'CONST_NAME'
-                    else:
-                        token.name = 'NAME'
-                
                     if current_identifier in self.identifiers_table:
                         # we met this identifier before
-                        # first check for possible errors
+                        token.name = self.identifiers_table[token.value][-1].name
                         self.identifiers_table[token.value].append(token)
                     else:
                         # A new identifier
                         self.identifiers_table[token.value] = [token]
+                        if self[-1].value in data_types and len(self) >= 2 and self[-2].value == 'const':
+                            # things like: const boolean p := true;
+                            token.name = 'CONST_NAME'
+                        else:
+                            token.name = 'NAME'
 
             elif self.current_char in punctuation:
                 # SOMETHING LIKE *, +, {, %, ;, .....
