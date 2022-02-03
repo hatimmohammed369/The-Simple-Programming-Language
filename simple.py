@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3.10
 
 import re
+from typing import Tuple
 from snoop import snoop
 
 ####################################################################################################
@@ -101,7 +102,7 @@ class Tokenizer:
     def pos(self):
         return Pos(self.idx, self.col, self.ln)
 
-    def next_token(self) -> Token | None:
+    def next_token(self) -> Tuple[Token | None, str | None]:
         token = None
         if self.current_char != '': # it is not EOF
             if self.current_char == '\n':
@@ -181,6 +182,19 @@ class Tokenizer:
                 else:
                     # Things like +, -, /, *, any thing single character
                     token.value = self.text[self.idx:self.idx+1]
+                    if self[-1].name == 'CONST_NAME' and token.value == '=':
+                        # Constant re-assignment, illegal
+                        nearest_new_line_backwards = self.text.rfind('\n', 0, self.idx)
+                        if nearest_new_line_backwards == -1:
+                            nearest_new_line_backwards = 0
+
+                        nearest_new_line_forwards = self.text.find('\n', self.idx)
+                        if nearest_new_line_forwards == -1:
+                            nearest_new_line_forwards = len(self.text)
+
+                        current_line = self.text[nearest_new_line_backwards:nearest_new_line_forwards]
+                        error = current_line + '\n' + (' ' * self.col) + '^' + 'Constant re-assignment\n'
+                        return None, error
                 
                 self.idx += len(token.value)
                 self.col += len(token.value)
@@ -220,12 +234,12 @@ class Tokenizer:
                 self.col += 1
         if token is not None:
             self.tokens_list.append(token)
-        return token
+        return token, None
 
     def __iter__(self):
         while True:
-            t = self.next_token()
-            if t is not None:
+            t, e = self.next_token()
+            if t is not None and e is not None:
                 yield t
             if self.current_char == '':
                 break
