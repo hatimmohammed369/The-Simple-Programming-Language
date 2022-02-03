@@ -185,7 +185,7 @@ class Tokenizer:
                 if current_identifier in self.identifiers_table:
                     # we met this identifier before
                     # first check for possible errors
-                    pass
+                    self.identifiers_table[token.value].append(token)
                 else:
                     # A new identifier
                     self.identifiers_table[token.value] = [token]
@@ -204,15 +204,19 @@ class Tokenizer:
                         # Constant re-assignment, illegal
                         nearest_new_line_backwards = self.text.rfind('\n', 0, self.idx)
                         if nearest_new_line_backwards == -1:
+                            # it is first line
                             nearest_new_line_backwards = 0
+                        else:
+                            nearest_new_line_backwards += 1
                         
                         nearest_new_line_forwards = self.text.find('\n', self.idx)
                         if nearest_new_line_forwards == -1:
+                            # it is last line
                             nearest_new_line_forwards = len(self.text)
                         
                         current_line = self.text[nearest_new_line_backwards:nearest_new_line_forwards]
-                        error = current_line + '\n' + (' ' * (self.col + len(token.value)-1)) + \
-                            '^' + 'Constant re-assignment\n'
+                        error = current_line + '\n' + (' ' * (self.col + 1)) + \
+                            '^\n' + (' ' * (self.col + 1)) + 'Constant re-assignment\n'
                         return None, error
                 
                 self.idx += len(token.value)
@@ -254,7 +258,6 @@ class Tokenizer:
         if token is not None:
             # we have a valid token
             self.tokens_list.append(token)
-            self.identifiers_table[token.value].append(token)
         return token, None
 
     def __iter__(self):
