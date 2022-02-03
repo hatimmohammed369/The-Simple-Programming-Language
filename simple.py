@@ -26,7 +26,8 @@ class Token:
         return f'Token({self.name}, {repr(self.value)}, {(begin)}-{end})'
     __str__ = __repr__
 
-language_words = ['const', 'int', 'float', 'string', 'array', 'null',
+language_words = ['const', 'int', 'float', 'string', 'array', 'null', 'true', 'false',
+                  'is', 'IS', 'not', 'and', 'or',
                   'break', 'continue', 'if', 'do', 'then', 'while', 'foreach', 'match', 'case', 'end',
                   'function', 'return', 'returns']
 
