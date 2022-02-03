@@ -21,8 +21,8 @@ read("floating-point {}", r);
 write("input " + string(r));
 
 function recursive_fib(int n) returns int => {
-  branch n
-    if n == 0 or n == 1 do
+  match n
+    case 0 or 1:
       return 1
   end "branch n"
   return recursive_fib(n-2) + recursive_fib(n-1)
