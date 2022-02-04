@@ -132,9 +132,25 @@ class Tokenizer:
                 first_non_whitespace = next_line_break if first_non_whitespace is None else first_non_whitespace.start()
                 error = None
                 captured_indent = self.text[self.idx:first_non_whitespace]
-                print(*[(repr(c), ord(c)) for c in captured_indent])
+                error = None
+                current_line = self.current_line()
+                if ' ' in captured_indent and '\t' in captured_indent:
+                    # Syntax Error: Mixing spaces and tabs in indentation
+                    error  = f'Line {self.ln + 1}:\n'
+                    error += ' ' + current_line
+                    error += ('^' * len(captured_indent)) + '\n'
+                    error += 'Syntax Error: Mixing spaces and tabs in indentation'
+                else:
+                    if self.ln == 0:
+                        # Syntax Error: Indenting first line
+                        error  = f'Line {self.ln + 1}:\n'
+                        error += ' ' + current_line + '\n'
+                        error += ('^' * len(captured_indent)) + '\n'
+                        error += 'Syntax Error: Indenting first line'
                 if error is not None:
                     return None, error
+
+                # No errors
 
             if self.current_char == '\n':
                 # NEWLINE
@@ -297,6 +313,6 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in Tokenizer(source):
             print(t)
 else:
-    source = 'const int x:=1;x=123;'
+    source = argv[1]
     for t in Tokenizer(source):
         print(t)
