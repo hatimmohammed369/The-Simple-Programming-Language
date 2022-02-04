@@ -96,6 +96,7 @@ class Tokenizer:
         self.indentation: str = ''
         self.indent_level = 0 # how many indents in currently
         self.dents_list: list[Token] = [] # stores indents and dedents
+        self.checked_indent = False
 
     def __len__(self):
         return len(self.tokens_list)
@@ -112,12 +113,8 @@ class Tokenizer:
             # it's first line
             previous_line_break = 0
         
-        next_line_break = self.text.find('\n', self.idx)
-        if next_line_break == -1:
-            # it's last line
-            next_line_break = len(self.text)
-        begin = previous_line_break + (1 if previous_line_break != 0 else 0)
-        return self.text[begin : next_line_break]
+        begin = previous_line_break + int(previous_line_break != 0)
+        return self.text[begin : self.text.find('\n', self.idx)]
 
     def next_token(self) -> tuple[Token | None, str | None]:
         token = None
@@ -130,6 +127,7 @@ class Tokenizer:
                 if self.idx < len(self.text):
                     self.current_char = self.text[self.idx]
                     self.col = 0
+                    self.checked_indent = False
                     self.ln += 1
                 else:
                     self.current_char= ''
@@ -264,22 +262,20 @@ class Tokenizer:
         return token, None
 
     def __iter__(self):
-        self.checked_indent = False
         while True:
             token, error = None, None
             if self.col == 0 and not self.checked_indent:
                 # Check for indentation
-                next_line_break = self.text.find('\n', self.idx)
-                if self.text.find('\n', self.idx) == self.idx or re.compile(r'\s+').match(string=self.text[self.idx:next_line_break]):
+                current_line = self.current_line()
+                if len(current_line) == 0 or re.match(pattern=r'\s+', string=current_line):
                     # this line is empty or it is just whitespaces
-                    self.idx = next_line_break
+                    self.idx = self.text.find('\n', self.idx + int(self.text[self.idx] == '\n'))
                     self.col += 1
                     self.current_char = '\n'
                     self.checked_indent = True
                     continue
                 else:
                     # this line contains some non-whitespaces
-                    current_line = self.current_line()
                     first_non_white_space = re.compile(r'[^\s]').search(string=current_line).start()
                     captured_indent = self.text[self.idx:first_non_white_space]
                     error = None
