@@ -105,12 +105,35 @@ class Tokenizer:
     def pos(self):
         return Pos(self.idx, self.col, self.ln)
 
+    def current_line(self) -> str:
+        previous_line_break = self.text.rfind('\n', 0, self.idx)
+        if previous_line_break == -1:
+            # it's first line
+            previous_line_break = 0
+        
+        next_line_break = self.text.find('\n', self.idx)
+        if next_line_break == -1:
+            # it's last line
+            next_line_break = len(self.text)
+        return self.text[previous_line_break + 1 : next_line_break]
+
     def next_token(self) -> tuple[Token | None, str | None]:
         token = None
         if self.current_char != '': # it is not EOF
             if self.col == 0:
                 # Check for indentation
-                pass
+                if self.ln == 0:
+                    # indent IS NOT allowed in first line
+                    next_line_break = self.text.find('\n')
+                    if next_line_break == len(self.text):
+                        # this file is a single empty indented line, nothing to do
+                        exit(0)
+                    first_non_whitespace_character = re.compile(r'[^\s]').search(string=self.text, endpos=next_line_break)
+                    if first_non_whitespace_character == -1:
+                        # first line may be indented AND empty, no code
+                        # but this is error only if there's more text that's not white-spaces
+                        pass
+                    error = '\nError: Indent in first line:\n'
             if self.current_char == '\n':
                 # NEWLINE
                 token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
@@ -207,20 +230,7 @@ class Tokenizer:
                     token.value = self.text[self.idx:self.idx+1]
                     if self[-1].name == 'CONST_NAME' and token.value == '=':
                         # Constant re-assignment, illegal
-                        nearest_new_line_backwards = self.text.rfind('\n', 0, self.idx)
-                        if nearest_new_line_backwards == -1:
-                            # it is first line
-                            nearest_new_line_backwards = 0
-                        else:
-                            nearest_new_line_backwards += 1
-                        
-                        nearest_new_line_forwards = self.text.find('\n', self.idx)
-                        if nearest_new_line_forwards == -1:
-                            # it is last line
-                            nearest_new_line_forwards = len(self.text)
-                        
-                        current_line = self.text[nearest_new_line_backwards:nearest_new_line_forwards]
-                        error = '\nConstant re-assignment error:\n' + current_line + '\n' + (' ' * self.col)
+                        error = '\nConstant re-assignment error:\n' + self.current_line() + '\n' + (' ' * self.col)
                         error += '^\n' + (' ' * self.col) + f'Constant ({self[-1].value}) re-assignment\n'
                         return None, error
                 
@@ -271,7 +281,8 @@ class Tokenizer:
             if e is not None:
                 print(e)
                 exit(0)
-            yield t
+            if t is not None:
+                yield t
             if self.current_char == '':
                 break
 ####################################################################################################
