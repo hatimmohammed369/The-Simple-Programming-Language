@@ -304,7 +304,7 @@ class Tokenizer:
                                 error += current_line + '\n'
                                 error += '^' * len(captured_indent) + '\n'
                             error += 'Syntax Error: Indenting first line'
-                        if error is None:
+                        if error == '':
                             # this is not first line
                             # Dont add Indent/Dedent token only if current_level is not 0
                             begin = self.pos()
@@ -346,7 +346,7 @@ class Tokenizer:
 from sys import argv
 if len(argv) == 3 and argv[1].lower() == '-f':
     with open(argv[2], 'r') as source_file:
-        source = str(source_file.read())
+        source = str(source_file.read()) + '\n'
         for t in Tokenizer(source):
             print(t)
 else:
