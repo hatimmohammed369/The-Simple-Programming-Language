@@ -328,6 +328,9 @@ class Tokenizer:
                             self.dents_list.append(token)
                         else:
                             self.checked_indent = False
+                        
+                        if error == '':
+                            error = None
             else:
                 token, error = self.next_token()
             #
