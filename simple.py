@@ -297,6 +297,7 @@ class Tokenizer:
                             begin = self.pos()
                             token = Token(value=captured_indent, pos_begin=begin)
                             token.pos_end = Pos(begin.idx+len(captured_indent), begin.col+len(captured_indent), self.ln)
+                            level = len(captured_indent) // 4
                             if level < self.indent_level:
                                 # DEDENT
                                 self.indent_level -= 1
