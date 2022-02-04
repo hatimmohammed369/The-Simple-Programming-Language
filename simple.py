@@ -88,9 +88,8 @@ class Tokenizer:
     def __init__(self, text: str):
         self.text: str = text
         self.current_char: str = ''
-        self.idx, self.ln, self.col = -1, -1, -1
+        self.idx, self.ln, self.col = 0, 0, 0
         if len(text) != 0:
-            self.idx, self.ln, self.col = 0, 0, 0
             self.current_char = self.text[0]
         self.tokens_list: list[Token] = []
         self.identifiers_table: dict[str, list[Token]] = {}
