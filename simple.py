@@ -271,6 +271,7 @@ class Tokenizer:
                 if self.text.find('\n', self.idx) == next_line_break or re.compile(r'\s*').match(string=self.text[self.idx:next_line_break]):
                     # this line is empty or it is just whitespaces
                     self.idx = next_line_break
+                    self.col += 1
                     self.current_char = '\n'
                     continue
                 else:
