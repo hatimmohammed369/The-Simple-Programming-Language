@@ -268,15 +268,16 @@ class Tokenizer:
                 # Check for indentation
                 current_line = self.current_line()
                 self.checked_indent = True
+                next_line_break = self.text.find('\n', self.idx + int(self.text[self.idx] == '\n'))
                 if len(current_line) == 0 or re.fullmatch(pattern=r'\s+', string=current_line):
                     # this line is empty or it is just whitespaces
-                    self.idx = self.text.find('\n', self.idx + int(self.text[self.idx] == '\n'))
+                    self.idx = next_line_break
                     self.col += 1
                     self.current_char = '\n'
                     continue
                 else:
                     # this line contains some non-whitespaces
-                    first_non_white_space = re.compile(r'[^\s]').search(string=current_line).start()
+                    first_non_white_space = re.compile(r'[^\s]').search(self.text, pos=self.idx, endpos=next_line_break)
                     captured_indent = self.text[self.idx:first_non_white_space]
                     error = None
                     if len(captured_indent) != 0:
