@@ -114,7 +114,11 @@ class Tokenizer:
             previous_line_break = 0
         
         begin = previous_line_break + int(previous_line_break != 0)
-        return self.text[begin : self.text.find('\n', self.idx)]
+        next_line_break = self.text.find('\n', self.idx)
+        if next_line_break == -1:
+            # this is last line
+            next_line_break = len(self.text)
+        return self.text[begin : next_line_break]
 
     def next_token(self) -> tuple[Token | None, str | None]:
         token = None
@@ -281,7 +285,8 @@ class Tokenizer:
                     first_non_white_space = first_non_white_space.start()
                     captured_indent = self.text[self.idx:first_non_white_space]
                     error = None
-                    if len(captured_indent) != 0:
+                    current_level = len(captured_indent) // 4
+                    if self.indent_level != current_level:
                         if ' ' in captured_indent and '\t' in captured_indent:
                             # Syntax Error: Mixing spaces and tabs in indentation
                             error  = f'Line {self.ln + 1}:\n'
@@ -294,16 +299,15 @@ class Tokenizer:
                             error += '^' * len(captured_indent)
                         if error is None:
                             # this is not first line
-                            # Dont add Indent/Dedent token only if level is not 0
+                            # Dont add Indent/Dedent token only if current_level is not 0
                             begin = self.pos()
                             token = Token(value=captured_indent, pos_begin=begin)
                             token.pos_end = Pos(begin.idx+len(captured_indent), begin.col+len(captured_indent), self.ln)
-                            level = len(captured_indent) // 4
-                            if level < self.indent_level:
+                            if current_level < self.indent_level:
                                 # DEDENT
                                 self.indent_level -= 1
                                 token.name = 'DEDENT'
-                            elif self.indent_level < level:
+                            elif self.indent_level < current_level:
                                 # INDENT
                                 self.indent_level += 1
                                 token.name = 'INDENT'
