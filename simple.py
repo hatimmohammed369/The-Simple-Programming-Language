@@ -127,6 +127,8 @@ class Tokenizer:
                 if next_line_break == -1:
                     next_line_break = len(self.text)
 
+
+                error = None
                 captured_indent = self.text[self.idx:next_line_break]
                 if '\t' in captured_indent and '\n' in captured_indent:
                     # Syntax Error: Mixing spaces and tabs in indentation
@@ -136,7 +138,13 @@ class Tokenizer:
 
                 if self.ln == 0:
                     # Possible Syntax Error: Indenting first line
-                    pass
+                    if error is None:
+                        error  = str(self.ln + 1) + ':\t' + self.current_line() + '\n'
+                        error += (' ' * ( len(str(self.ln + 1)) + len(':\t') )) + '^' * len(captured_indent) + '\n'
+                    error += 'Syntax Error: Indenting first line'
+
+                if error is not None:
+                    return None, error
 
             if self.current_char == '\n':
                 # NEWLINE
