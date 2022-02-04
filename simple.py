@@ -135,14 +135,15 @@ class Tokenizer:
                 if '\t' in captured_indent and '\n' in captured_indent:
                     # Syntax Error: Mixing spaces and tabs in indentation
                     error  = str(self.ln + 1) + ':\t' + self.current_line() + '\n'
-                    error += (' ' * ( len(str(self.ln + 1)) + len(':\t') )) + '^' * len(captured_indent) + '\n'
+                    error += (' ' * ( len(str(self.ln + 1)) + 1 )) + '\t^' * len(captured_indent) + '\n'
                     error += 'Syntax Error: Mixing spaces and tabs in indentation'
 
                 if self.ln == 0:
                     # Possible Syntax Error: Indenting first line
                     if error is None:
-                        error  = str(self.ln + 1) + ':\t' + self.current_line() + '\n'
-                        error += (' ' * ( len(str(self.ln + 1)) + len(':\t') )) + '^' * len(captured_indent) + '\n'
+                        lineno = str(self.ln + 1) 
+                        error  = lineno + ':' + self.current_line() + '\n'
+                        error += (' ' * len(lineno)) + '^' * len(captured_indent) + '\n'
                     error += 'Syntax Error: Indenting first line'
 
                 if error is not None:
