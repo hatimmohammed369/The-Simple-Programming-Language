@@ -267,12 +267,12 @@ class Tokenizer:
             if self.col == 0 and not self.checked_indent:
                 # Check for indentation
                 current_line = self.current_line()
-                if len(current_line) == 0 or re.match(pattern=r'\s+', string=current_line):
+                self.checked_indent = True
+                if len(current_line) == 0 or re.fullmatch(pattern=r'\s+', string=current_line):
                     # this line is empty or it is just whitespaces
                     self.idx = self.text.find('\n', self.idx + int(self.text[self.idx] == '\n'))
                     self.col += 1
                     self.current_char = '\n'
-                    self.checked_indent = True
                     continue
                 else:
                     # this line contains some non-whitespaces
@@ -291,7 +291,6 @@ class Tokenizer:
                             error += ' ' + current_line + '\n'
                             error += '^' * len(captured_indent)
                         if error is None:
-                            self.checked_indent = True
                             # this is not first line
                             # Dont add Indent/Dedent token only if level is not 0
                             begin = self.pos()
@@ -314,6 +313,8 @@ class Tokenizer:
                                 self.current_char = ''
                             self.tokens_list.append(token)
                             self.dents_list.append(token)
+                        else:
+                            self.checked_indent = False
             else:
                 token, error = self.next_token()
             #
