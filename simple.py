@@ -116,7 +116,8 @@ class Tokenizer:
         if next_line_break == -1:
             # it's last line
             next_line_break = len(self.text)
-        return self.text[previous_line_break + 1 : next_line_break]
+        begin = previous_line_break + (1 if previous_line_break != 0 else 0)
+        return self.text[begin : next_line_break]
 
     def next_token(self) -> tuple[Token | None, str | None]:
         token = None
