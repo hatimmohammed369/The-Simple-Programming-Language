@@ -95,6 +95,7 @@ class Tokenizer:
         self.identifiers_table: dict[str, list[Token]] = {}
         self.indentation: str = ''
         self.indent_level = 0 # how many indents in currently
+        self.dents_list = [] # stores indents and dedents
 
     def __len__(self):
         return len(self.tokens_list)
@@ -121,19 +122,22 @@ class Tokenizer:
         token = None
         if self.current_char != '': # it is not EOF
             if self.col == 0:
-                # Check for indentation
+                # WE CHECK FOR INDENTATION ONLY AT THE BEGINNING OF LINE
+                next_line_break = self.text.find('\n', self.idx)
+                if next_line_break == -1:
+                    next_line_break = len(self.text)
+
+                captured_indent = self.text[self.idx:next_line_break]
+                if '\t' in captured_indent and '\n' in captured_indent:
+                    # Syntax Error: Mixing spaces and tabs in indentation
+                    error  = str(self.ln + 1) + ':\t' + self.current_line() + '\n'
+                    error += (' ' * ( len(str(self.ln + 1)) + len(':\t') )) + '^' * len(captured_indent) + '\n'
+                    error += 'Syntax Error: Mixing spaces and tabs in indentation'
+
                 if self.ln == 0:
-                    # indent IS NOT allowed in first line
-                    next_line_break = self.text.find('\n')
-                    if next_line_break == len(self.text):
-                        # this file is a single empty indented line, nothing to do
-                        exit(0)
-                    first_non_whitespace_character = re.compile(r'[^\s]').search(string=self.text, endpos=next_line_break)
-                    if first_non_whitespace_character == -1:
-                        # first line may be indented AND empty, no code
-                        # but this is error only if there's more text that's not white-spaces
-                        pass
-                    error = '\nError: Indent in first line:\n'
+                    # Possible Syntax Error: Indenting first line
+                    pass
+
             if self.current_char == '\n':
                 # NEWLINE
                 token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
