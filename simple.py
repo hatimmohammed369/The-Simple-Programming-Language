@@ -273,6 +273,9 @@ class Tokenizer:
                 current_line = self.current_line()
                 self.checked_indent = True
                 next_line_break = self.text.find('\n', self.idx + int(self.text[self.idx] == '\n'))
+                if next_line_break == -1:
+                    # this is last line
+                    next_line_break = len(self.text)
                 if len(current_line) == 0 or re.fullmatch(pattern=r'\s+', string=current_line):
                     # this line is empty or it is just whitespaces
                     self.idx = next_line_break
