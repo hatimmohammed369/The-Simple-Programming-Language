@@ -127,7 +127,9 @@ class Tokenizer:
                 if next_line_break == -1:
                     next_line_break = len(self.text)
 
-                first_non_whitespace = re.compile(r'[^\s]').search(self.text, pos=self.idx, endpos=next_line_break)
+                non_whitespace_pattern = re.compile(r'[^\s]')
+                first_non_whitespace = non_whitespace_pattern.search(self.text, pos=self.idx, endpos=next_line_break)
+                first_non_whitespace = next_line_break if first_non_whitespace is None else first_non_whitespace.end()
                 error = None
                 captured_indent = self.text[self.idx:first_non_whitespace]
                 if '\t' in captured_indent and '\n' in captured_indent:
