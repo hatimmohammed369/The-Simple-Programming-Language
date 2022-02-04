@@ -290,7 +290,7 @@ class Tokenizer:
                         error  = 'Line 1:\n'
                         error += ' ' + current_line + '\n'
                         error += '^' * len(captured_indent)
-                    if error is not None:
+                    if error is None:
                         # this is not first line
                         level = len(captured_indent) // 4
                         begin = self.pos()
