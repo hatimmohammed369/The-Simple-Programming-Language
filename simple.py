@@ -127,9 +127,9 @@ class Tokenizer:
                 if next_line_break == -1:
                     next_line_break = len(self.text)
 
-
+                first_non_whitespace = re.compile(r'[^\s]').search(self.text, pos=self.idx, endpos=next_line_break)
                 error = None
-                captured_indent = self.text[self.idx:next_line_break]
+                captured_indent = self.text[self.idx:first_non_whitespace]
                 if '\t' in captured_indent and '\n' in captured_indent:
                     # Syntax Error: Mixing spaces and tabs in indentation
                     error  = str(self.ln + 1) + ':\t' + self.current_line() + '\n'
