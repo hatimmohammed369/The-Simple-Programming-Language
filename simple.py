@@ -268,7 +268,7 @@ class Tokenizer:
             if self.col == 0:
                 # Check for indentation
                 next_line_break = self.text.find('\n', self.idx)
-                if self.text.find('\n', self.idx) == next_line_break or re.compile(r'\s*').match(string=self.text[self.idx:next_line_break]):
+                if self.text.find('\n', self.idx) == self.idx or re.compile(r'\s+').match(string=self.text[self.idx:next_line_break]):
                     # this line is empty or it is just whitespaces
                     self.idx = next_line_break
                     self.col += 1
@@ -280,12 +280,17 @@ class Tokenizer:
                     first_non_white_space = re.compile(r'[^\s]').search(string=current_line).start()
                     captured_indent = self.text[self.idx:first_non_white_space]
                     error = None
-                    if self.ln == 0:
+                    if ' ' in captured_indent and '\t' in captured_indent:
+                        # Syntax Error: Mixing spaces and tabs in indentation
+                        error  = f'Line {self.ln + 1}:\n'
+                        error += ' ' + current_line + '\n'
+                        error += '^' * len(captured_indent)
+                    if self.ln == 0 and len(captured_indent) != 0:
                         # if it is first line, this is Syntax Error
                         error  = 'Line 1:\n'
                         error += ' ' + current_line + '\n'
                         error += '^' * len(captured_indent)
-                    else:
+                    if error is not None:
                         # this is not first line
                         level = len(captured_indent) // 4
                         begin = self.pos()
