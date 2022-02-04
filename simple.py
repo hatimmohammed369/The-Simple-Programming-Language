@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3.10
 
 import re
+from typing import Any
 from snoop import snoop
 
 ####################################################################################################
@@ -18,7 +19,7 @@ class Pos:
 @dataclass(init=True, repr=True, eq=True)
 class Token:
     name: str = ''
-    value: str = ''
+    value: Any = object()
     pos_begin: Pos = Pos()
     pos_end: Pos = Pos()
     def __repr__(self):
@@ -95,7 +96,7 @@ class Tokenizer:
         self.identifiers_table: dict[str, list[Token]] = {}
         self.indentation: str = ''
         self.indent_level = 0 # how many indents in currently
-        self.dents_list = [] # stores indents and dedents
+        self.dents_list: list[Token] = [] # stores indents and dedents
 
     def __len__(self):
         return len(self.tokens_list)
@@ -141,7 +142,7 @@ class Tokenizer:
                     error += ('^' * len(captured_indent)) + '\n'
                     error += 'Syntax Error: Mixing spaces and tabs in indentation'
                 else:
-                    if self.ln == 0:
+                    if self.ln == 0 and len(captured_indent) != 0:
                         # Syntax Error: Indenting first line
                         error  = f'Line {self.ln + 1}:\n'
                         error += ' ' + current_line + '\n'
@@ -151,6 +152,25 @@ class Tokenizer:
                     return None, error
 
                 # No errors
+                count = len(captured_indent) // 4
+                print(f'count = {count}')
+                begin = self.pos()
+                dent = Token(value=count)
+                dent.pos_end = Pos(begin.idx + len(captured_indent), begin.col + len(captured_indent), self.ln)
+                if len(self.dents_list) == 0:
+                    # First indent in file
+                    dent.name = 'INDENT'
+                else:
+                    if count < self.dents_list[-1].value:
+                        # DEDENT
+                        dent.name = 'DEDENT'
+                    elif count > self.dents_list[-1].value:
+                        # INDENT
+                        dent.name = 'INDENT'
+                self.dents_list.append(dent)
+                self.idx += len(captured_indent)
+                self.col += len(captured_indent)
+                token = dent
 
             if self.current_char == '\n':
                 # NEWLINE
