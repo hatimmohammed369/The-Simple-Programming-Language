@@ -279,20 +279,20 @@ class Tokenizer:
                     first_non_white_space = re.compile(r'[^\s]').search(string=current_line).start()
                     captured_indent = self.text[self.idx:first_non_white_space]
                     error = None
-                    if ' ' in captured_indent and '\t' in captured_indent:
-                        # Syntax Error: Mixing spaces and tabs in indentation
-                        error  = f'Line {self.ln + 1}:\n'
-                        error += ' ' + current_line + '\n'
-                        error += '^' * len(captured_indent)
-                    if self.ln == 0 and len(captured_indent) != 0:
-                        # if it is first line, this is Syntax Error
-                        error  = 'Line 1:\n'
-                        error += ' ' + current_line + '\n'
-                        error += '^' * len(captured_indent)
-                    if error is None:
-                        self.checked_indent = True
-                        # this is not first line
-                        if (level := len(captured_indent) // 4) != 0:
+                    if len(captured_indent) != 0:
+                        if ' ' in captured_indent and '\t' in captured_indent:
+                            # Syntax Error: Mixing spaces and tabs in indentation
+                            error  = f'Line {self.ln + 1}:\n'
+                            error += ' ' + current_line + '\n'
+                            error += '^' * len(captured_indent)
+                        if self.ln == 0 and len(captured_indent) != 0:
+                            # if it is first line, this is Syntax Error
+                            error  = 'Line 1:\n'
+                            error += ' ' + current_line + '\n'
+                            error += '^' * len(captured_indent)
+                        if error is None:
+                            self.checked_indent = True
+                            # this is not first line
                             # Dont add Indent/Dedent token only if level is not 0
                             begin = self.pos()
                             token = Token(value=captured_indent, pos_begin=begin)
