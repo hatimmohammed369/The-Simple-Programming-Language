@@ -172,7 +172,7 @@ class Tokenizer:
                 self.col += len(captured_indent)
                 token = dent
 
-            if self.current_char == '\n':
+            elif self.current_char == '\n':
                 # NEWLINE
                 token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
                 token.pos_end = Pos(self.idx+1, self.col+1, self.ln)
@@ -315,12 +315,19 @@ class Tokenizer:
 
     def __iter__(self):
         while True:
-            t, e = self.next_token()
-            if e is not None:
-                print(e)
-                exit(0)
-            if t is not None:
-                yield t
+            if re.fullmatch(r'^\s*$', self.current_line()) is not None:
+                # Empty lines cause problems, skip them
+                t, e = self.next_token()
+                if e is not None:
+                    print(e)
+                    exit(0)
+                if t is not None:
+                    yield t
+            else:
+                # we mustt advanced here, not to create an infinite loop
+                old_idx = self.idx
+                self.idx = self.text.find('\n', self.idx)
+                self.col += (self.idx - old_idx)
             if self.current_char == '':
                 break
 ####################################################################################################
@@ -333,6 +340,9 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in Tokenizer(source):
             print(t)
 else:
-    source = argv[1]
+    source = """
+    if n == 0:
+        write(0)
+    """
     for t in Tokenizer(source):
         print(t)
