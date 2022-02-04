@@ -293,24 +293,27 @@ class Tokenizer:
                         error += '^' * len(captured_indent)
                     if error is None:
                         # this is not first line
-                        level = len(captured_indent) // 4
-                        begin = self.pos()
-                        token = Token(value=captured_indent, pos_begin=begin)
-                        token.pos_end = Pos(begin.idx+len(captured_indent), begin.col+len(captured_indent), self.ln)
-                        if level < self.indent_level:
-                            # DEDENT
-                            self.indent_level -= 1
-                            token.name = 'DEDENT'
-                        elif self.indent_level < level:
-                            # INDENT
-                            self.indent_level += 1
-                            token.name = 'INDENT'
-                        self.idx += len(token.value)
-                        self.col += len(token.value)
-                        if self.idx < len(self.text):
-                            self.current_char = self.text[self.idx]
-                        else:
-                            self.current_char = ''
+                        if level := len(captured_indent) // 4:
+                            # Dont add Indent/Dedent token only if level is not 0
+                            begin = self.pos()
+                            token = Token(value=captured_indent, pos_begin=begin)
+                            token.pos_end = Pos(begin.idx+len(captured_indent), begin.col+len(captured_indent), self.ln)
+                            if level < self.indent_level:
+                                # DEDENT
+                                self.indent_level -= 1
+                                token.name = 'DEDENT'
+                            elif self.indent_level < level:
+                                # INDENT
+                                self.indent_level += 1
+                                token.name = 'INDENT'
+                            self.idx += len(token.value)
+                            self.col += len(token.value)
+                            if self.idx < len(self.text):
+                                self.current_char = self.text[self.idx]
+                            else:
+                                self.current_char = ''
+                            self.tokens_list.append(token)
+                            self.dents_list.append(token)
             else:
                 token, error = self.next_token()
             #
