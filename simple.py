@@ -129,23 +129,10 @@ class Tokenizer:
 
                 non_whitespace_pattern = re.compile(r'[^\s]')
                 first_non_whitespace = non_whitespace_pattern.search(self.text, pos=self.idx, endpos=next_line_break)
-                first_non_whitespace = next_line_break if first_non_whitespace is None else first_non_whitespace.end()
+                first_non_whitespace = next_line_break if first_non_whitespace is None else first_non_whitespace.start()
                 error = None
                 captured_indent = self.text[self.idx:first_non_whitespace]
-                if '\t' in captured_indent and '\n' in captured_indent:
-                    # Syntax Error: Mixing spaces and tabs in indentation
-                    error  = str(self.ln + 1) + ':\t' + self.current_line() + '\n'
-                    error += (' ' * ( len(str(self.ln + 1)) + 1 )) + '\t^' * len(captured_indent) + '\n'
-                    error += 'Syntax Error: Mixing spaces and tabs in indentation'
-
-                if self.ln == 0:
-                    # Possible Syntax Error: Indenting first line
-                    if error is None:
-                        lineno = str(self.ln + 1) 
-                        error  = lineno + ':' + self.current_line() + '\n'
-                        error += (' ' * len(lineno)) + '^' * len(captured_indent) + '\n'
-                    error += 'Syntax Error: Indenting first line'
-
+                print(*[(repr(c), ord(c)) for c in captured_indent])
                 if error is not None:
                     return None, error
 
@@ -227,7 +214,7 @@ class Tokenizer:
                     else:
                         # A new identifier
                         self.identifiers_table[token.value] = [token]
-                        if self[-1].value in data_types and len(self) >= 2 and self[-2].value == 'const':
+                        if len(self) >= 2 and self.tokens_list[-1].value in data_types and self.tokens_list[-2].value == 'const':
                             # things like: const boolean p := true;
                             token.name = 'CONST_NAME'
                         else:
