@@ -122,57 +122,7 @@ class Tokenizer:
     def next_token(self) -> tuple[Token | None, str | None]:
         token = None
         if self.current_char != '': # it is not EOF
-            if self.col == 0:
-                # WE CHECK FOR INDENTATION ONLY AT THE BEGINNING OF LINE
-                next_line_break = self.text.find('\n', self.idx)
-                if next_line_break == -1:
-                    next_line_break = len(self.text)
-
-                non_whitespace_pattern = re.compile(r'[^\s]')
-                first_non_whitespace = non_whitespace_pattern.search(self.text, pos=self.idx, endpos=next_line_break)
-                first_non_whitespace = next_line_break if first_non_whitespace is None else first_non_whitespace.start()
-                error = None
-                captured_indent = self.text[self.idx:first_non_whitespace]
-                error = None
-                current_line = self.current_line()
-                if ' ' in captured_indent and '\t' in captured_indent:
-                    # Syntax Error: Mixing spaces and tabs in indentation
-                    error  = f'Line {self.ln + 1}:\n'
-                    error += ' ' + current_line
-                    error += ('^' * len(captured_indent)) + '\n'
-                    error += 'Syntax Error: Mixing spaces and tabs in indentation'
-                else:
-                    if self.ln == 0 and len(captured_indent) != 0:
-                        # Syntax Error: Indenting first line
-                        error  = f'Line {self.ln + 1}:\n'
-                        error += ' ' + current_line + '\n'
-                        error += ('^' * len(captured_indent)) + '\n'
-                        error += 'Syntax Error: Indenting first line'
-                if error is not None:
-                    return None, error
-
-                # No errors
-                count = len(captured_indent) // 4
-                print(f'count = {count}')
-                begin = self.pos()
-                dent = Token(value=count)
-                dent.pos_end = Pos(begin.idx + len(captured_indent), begin.col + len(captured_indent), self.ln)
-                if len(self.dents_list) == 0:
-                    # First indent in file
-                    dent.name = 'INDENT'
-                else:
-                    if count < self.dents_list[-1].value:
-                        # DEDENT
-                        dent.name = 'DEDENT'
-                    elif count > self.dents_list[-1].value:
-                        # INDENT
-                        dent.name = 'INDENT'
-                self.dents_list.append(dent)
-                self.idx += len(captured_indent)
-                self.col += len(captured_indent)
-                token = dent
-
-            elif self.current_char == '\n':
+            if self.current_char == '\n':
                 # NEWLINE
                 token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
                 token.pos_end = Pos(self.idx+1, self.col+1, self.ln)
@@ -315,19 +265,12 @@ class Tokenizer:
 
     def __iter__(self):
         while True:
-            if re.fullmatch(r'^\s*$', self.current_line()) is not None:
-                # Empty lines cause problems, skip them
-                t, e = self.next_token()
-                if e is not None:
-                    print(e)
-                    exit(0)
-                if t is not None:
-                    yield t
-            else:
-                # we mustt advanced here, not to create an infinite loop
-                old_idx = self.idx
-                self.idx = self.text.find('\n', self.idx)
-                self.col += (self.idx - old_idx)
+            t, e = self.next_token()
+            if e is not None:
+                print(e)
+                exit(0)
+            if t is not None:
+                yield t
             if self.current_char == '':
                 break
 ####################################################################################################
@@ -340,9 +283,6 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in Tokenizer(source):
             print(t)
 else:
-    source = """
-    if n == 0:
-        write(0)
-    """
+    source = argv[1]
     for t in Tokenizer(source):
         print(t)
