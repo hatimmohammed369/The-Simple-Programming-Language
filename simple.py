@@ -314,8 +314,8 @@ class Tokenizer:
                                 # INDENT
                                 self.indent_level += 1
                                 token.name = 'INDENT'
-                            self.idx += len(token.value)
-                            self.col += len(token.value)
+                            self.idx = first_non_white_space
+                            self.col = current_line.find(self.text[first_non_white_space])
                             if self.idx < len(self.text):
                                 self.current_char = self.text[self.idx]
                             else:
