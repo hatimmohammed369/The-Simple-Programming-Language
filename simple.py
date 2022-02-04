@@ -81,6 +81,7 @@ int_pattern = re.compile(r'[+-]{0,1}\d+([eE][+-]{0,1}\d+){0,1}')
 float_pattern = re.compile(r'[+-]{0,1}\d+[.]\d*([eE][+-]{0,1}\d+){0,1}|[+-]{0,1}\d*[.]\d+([eE][+-]{0,1}\d+){0,1}')
 number_pattern = re.compile(float_pattern.pattern + '|' + int_pattern.pattern)
 string_pattern = re.compile(r'f{0,1}".*?(?<!\\)"')
+indent_pattern = re.compile(r'[ ]{4}|[\t]') # 4 consecutive spaces or a single tab
 
 class Tokenizer:
     def __init__(self, text: str):
@@ -92,6 +93,8 @@ class Tokenizer:
             self.current_char = self.text[0]
         self.tokens_list: list[Token] = []
         self.identifiers_table: dict[str, list[Token]] = {}
+        self.indentation: str = ''
+        self.indent_level = 0 # how many indents in currently
 
     def __len__(self):
         return len(self.tokens_list)
@@ -105,6 +108,9 @@ class Tokenizer:
     def next_token(self) -> tuple[Token | None, str | None]:
         token = None
         if self.current_char != '': # it is not EOF
+            if self.col == 0:
+                # Check for indentation
+                pass
             if self.current_char == '\n':
                 # NEWLINE
                 token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
