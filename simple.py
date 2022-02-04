@@ -278,6 +278,7 @@ class Tokenizer:
                 else:
                     # this line contains some non-whitespaces
                     first_non_white_space = re.compile(r'[^\s]').search(self.text, pos=self.idx, endpos=next_line_break)
+                    first_non_white_space = first_non_white_space.start()
                     captured_indent = self.text[self.idx:first_non_white_space]
                     error = None
                     if len(captured_indent) != 0:
