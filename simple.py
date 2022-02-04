@@ -265,13 +265,50 @@ class Tokenizer:
 
     def __iter__(self):
         while True:
-            t, e = self.next_token()
-            if e is not None:
-                print(e)
+            token, error = None, None
+            if self.col == 0:
+                # Check for indentation
+                next_line_break = self.text.find('\n', self.idx)
+                if self.text.find('\n', self.idx) == next_line_break or re.compile(r'\s*').match(string=self.text[self.idx:next_line_break]):
+                    # this line is empty or it is just whitespaces
+                    self.idx = next_line_break
+                    continue
+                else:
+                    # this line contains some non-whitespaces
+                    current_line = self.current_line()
+                    first_non_white_space = re.compile(r'[^\s]').search(string=current_line).start()
+                    captured_indent = self.text[self.idx:first_non_white_space]
+                    error = None
+                    if self.ln == 0:
+                        # if it is first line, this is Syntax Error
+                        error  = 'Line 1:\n'
+                        error += ' ' + current_line + '\n'
+                        error += '^' * len(captured_indent)
+                    else:
+                        # this is not first line
+                        level = len(captured_indent) // 4
+                        begin = self.pos()
+                        token = Token(value=captured_indent, pos_begin=begin)
+                        token.pos_end = Pos(begin.idx+len(captured_indent), begin.col+len(captured_indent), self.ln)
+                        if level < self.indent_level:
+                            # DEDENT
+                            self.indent_level -= 1
+                            token.name = 'DEDENT'
+                        elif self.indent_level < level:
+                            # INDENT
+                            self.indent_level += 1
+                            token.name = 'INDENT'
+            else:
+                token, error = self.next_token()
+            #
+            #
+            if error is not None:
+                print(error)
                 exit(0)
-            if t is not None:
-                yield t
+            if token is not None:
+                yield token
             if self.current_char == '':
+                # DONE!
                 break
 ####################################################################################################
 
@@ -283,6 +320,9 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in Tokenizer(source):
             print(t)
 else:
-    source = argv[1]
+    source = """write(0)
+function f() returns int => {
+    write("empty fucntion");
+}"""
     for t in Tokenizer(source):
         print(t)
