@@ -290,16 +290,20 @@ class Tokenizer:
                     error = None
                     current_level = len(captured_indent) // 4
                     if self.indent_level != current_level:
+                        error = ''
                         if ' ' in captured_indent and '\t' in captured_indent:
                             # Syntax Error: Mixing spaces and tabs in indentation
-                            error  = f'Line {self.ln + 1}:\n'
-                            error += ' ' + current_line + '\n'
-                            error += '^' * len(captured_indent)
+                            error += f'Line {self.ln + 1}:\n'
+                            error += current_line + '\n'
+                            error += '^' * len(captured_indent) + '\n'
+                            error += 'Syntax Error: Mixing spaces and tabs in indentation'
                         if self.ln == 0 and len(captured_indent) != 0:
                             # if it is first line, this is Syntax Error
-                            error  = 'Line 1:\n'
-                            error += ' ' + current_line + '\n'
-                            error += '^' * len(captured_indent)
+                            if len(error) == 0:
+                                error += 'Line 1:\n'
+                                error += current_line + '\n'
+                                error += '^' * len(captured_indent) + '\n'
+                            error += 'Syntax Error: Indenting first line'
                         if error is None:
                             # this is not first line
                             # Dont add Indent/Dedent token only if current_level is not 0
