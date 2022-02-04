@@ -264,9 +264,10 @@ class Tokenizer:
         return token, None
 
     def __iter__(self):
+        self.checked_indent = False
         while True:
             token, error = None, None
-            if self.col == 0:
+            if self.col == 0 and not self.checked_indent:
                 # Check for indentation
                 next_line_break = self.text.find('\n', self.idx)
                 if self.text.find('\n', self.idx) == self.idx or re.compile(r'\s+').match(string=self.text[self.idx:next_line_break]):
@@ -274,6 +275,7 @@ class Tokenizer:
                     self.idx = next_line_break
                     self.col += 1
                     self.current_char = '\n'
+                    self.checked_indent = True
                     continue
                 else:
                     # this line contains some non-whitespaces
@@ -292,8 +294,9 @@ class Tokenizer:
                         error += ' ' + current_line + '\n'
                         error += '^' * len(captured_indent)
                     if error is None:
+                        self.checked_indent = True
                         # this is not first line
-                        if level := len(captured_indent) // 4:
+                        if (level := len(captured_indent) // 4) != 0:
                             # Dont add Indent/Dedent token only if level is not 0
                             begin = self.pos()
                             token = Token(value=captured_indent, pos_begin=begin)
