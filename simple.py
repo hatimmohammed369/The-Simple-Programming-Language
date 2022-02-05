@@ -244,13 +244,6 @@ class Tokenizer:
             elif re.match(pattern=r'[.0-9]', string=self.current_char):
                 # A NUMBER
                 number_match = number_pattern.search(string=self.text, pos=self.idx)
-                if number_match is None:
-                    error  = f'Line {self.ln + 1}:\n'
-                    error += self.current_line() + '\n'
-                    first_non_number_char = re.compile(r'[^.eE0-9]').search(self.text, pos=self.idx).start()
-                    error += '^' * (first_non_number_char - self.idx) + '\n'
-                    error += 'Error: Expected number here'
-                    return None, error
                 match_value = number_match.group()
                 begin =   self.pos()
                 token =   Token(name='NUMBER', pos_begin=begin)
@@ -260,10 +253,10 @@ class Tokenizer:
                 else:
                     # float
                     token.value = float(match_value)
-                end   =   Pos(token.pos_begin.idx + len(token.value), token.pos_begin.col + len(token.value), self.ln)
+                end=Pos(token.pos_begin.idx+len(str(token.value)), token.pos_begin.col+len(str(token.value)), self.ln)
                 token.pos_end = end
                 self.idx = number_match.end()
-                self.col += len(token.value)
+                self.col += len(str(token.value))
                 if self.idx < len(self.text):
                     self.current_char = self.text[self.idx]
                 else:
