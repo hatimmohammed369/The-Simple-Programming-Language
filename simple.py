@@ -156,7 +156,12 @@ class Tokenizer:
             elif string := string_pattern.match(string=self.text, pos=self.idx):
                 # STRING
                 match_value = string.group()
-                token = Token(name='f-string' if match_value[0] == 'f' else 'string', value=match_value)
+                token = Token(value=match_value)
+                if self.tokens_list[-1].value == 'end':
+                    # this line is like: end "some text here"
+                    token.name = "END_LABEL"
+                else:
+                    token.name = 'F-STRING' if match_value[0] == 'f' else 'STRING'
                 begin = self.pos()
                 token.pos_begin = begin
                 self.idx = string.end()
@@ -239,8 +244,22 @@ class Tokenizer:
             elif re.match(pattern=r'[.0-9]', string=self.current_char):
                 # A NUMBER
                 number_match = number_pattern.search(string=self.text, pos=self.idx)
+                if number_match is None:
+                    error  = f'Line {self.ln + 1}:\n'
+                    error += self.current_line() + '\n'
+                    first_non_number_char = re.compile(r'[^.eE0-9]').search(self.text, pos=self.idx).start()
+                    error += '^' * (first_non_number_char - self.idx) + '\n'
+                    error += 'Error: Expected number here'
+                    return None, error
+                match_value = number_match.group()
                 begin =   self.pos()
-                token =   Token(name='NUMBER', value=number_match.group(), pos_begin=begin)
+                token =   Token(name='NUMBER', pos_begin=begin)
+                if int_pattern.match(string=match_value):
+                    # int
+                    token.value = int(match_value)
+                else:
+                    # float
+                    token.value = float(match_value)
                 end   =   Pos(token.pos_begin.idx + len(token.value), token.pos_begin.col + len(token.value), self.ln)
                 token.pos_end = end
                 self.idx = number_match.end()
