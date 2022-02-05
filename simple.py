@@ -350,6 +350,7 @@ from sys import argv
 if len(argv) == 3 and argv[1].lower() == '-f':
     with open(argv[2], 'r') as source_file:
         source = str(source_file.read()) + '\n'
+        print(source)
         for t in Tokenizer(source):
             print(t)
 else:
@@ -357,5 +358,6 @@ else:
 function f() returns int => {
     write("empty fucntion");
 }"""
+    print(source)
     for t in Tokenizer(source):
         print(t)
