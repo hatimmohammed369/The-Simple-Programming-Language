@@ -129,7 +129,7 @@ class Tokenizer:
                 # NEWLINE
                 token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
                 token.pos_end = Pos(self.idx+1, self.col+1, self.ln)
-                self.lines[self.line_break_index] = self.text[self.line_break_index+1: self.idx]
+                self.lines[self.line_break_index] = self.text[self.line_break_index+int(self.line_break_index != 0): self.idx]
                 self.line_break_index = self.idx
                 self.idx += 1
                 if self.idx < len(self.text):
