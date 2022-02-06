@@ -96,7 +96,7 @@ class Tokenizer:
         self.dents_list: list[Token] = [] # stores indents and dedents
         self.checked_indent = False
         self.lines = {}
-        self.line_break_index= 0
+        self.last_line_break_index= 0
 
     def __len__(self):
         return len(self.tokens_list)
@@ -108,7 +108,23 @@ class Tokenizer:
         return Pos(self.idx, self.col, self.ln)
 
     def current_line(self) -> str:
-        return self.lines[self.ln]
+        try:
+            current_line = self.lines[self.ln]
+        except KeyError:
+            # we haven't yet added current line
+            begin = self.text.rfind('\n', 0, self.idx)
+            if begin == -1:
+                # this is first line
+                begin = 0
+            else:
+                begin += 1 # so as we dont include previous line break
+            
+            end = self.text.find('\n', self.idx)
+            if end == -1:
+                # this is last line
+                end = len(self.text)
+            self.lines[self.ln] = current_line = self.text[begin:end]
+        return current_line
 
     def next_token(self) -> tuple[Token | None, str | None]:
         token = None
@@ -117,8 +133,8 @@ class Tokenizer:
                 # NEWLINE
                 token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
                 token.pos_end = Pos(self.idx+1, self.col+1, self.ln)
-                self.lines[self.line_break_index] = self.text[self.line_break_index+int(self.line_break_index != 0): self.idx]
-                self.line_break_index = self.idx
+                self.lines[self.last_line_break_index] = self.text[self.last_line_break_index+int(self.last_line_break_index != 0): self.idx]
+                self.last_line_break_index = self.idx
                 self.idx += 1
                 if self.idx < len(self.text):
                     self.current_char = self.text[self.idx]
@@ -222,7 +238,7 @@ class Tokenizer:
                         const_name_token = self.tokens_list[-1]
                         error += '^\n' + (' ' * self.col) + f'Constant ({const_name_token.value}) re-assignment\n'
                         const_declaration_line = self.identifiers_table[const_name_token.value][0].pos_begin.ln
-                        error += 'Defined here, line {const_declaration_line + 1}:\n'
+                        error += f'Defined here, line {const_declaration_line + 1}:\n'
                         error += self.lines[const_declaration_line]
                         return None, error
                 
@@ -368,7 +384,11 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for line in tokenizer.lines:
             print(line)
 else:
-    source = argv[1]
+    source = """const int x:=1;
+write(x)
+x=12;
+"""
+
     print(source)
     tokenizer = Tokenizer(source)
     for t in tokenizer:
