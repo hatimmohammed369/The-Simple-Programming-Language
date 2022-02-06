@@ -2,7 +2,6 @@
 
 import re
 from typing import Any
-from snoop import snoop
 
 ####################################################################################################
 
@@ -93,8 +92,7 @@ class Tokenizer:
             self.current_char = self.text[0]
         self.tokens_list: list[Token] = []
         self.identifiers_table: dict[str, list[Token]] = {}
-        self.indentation: str = ''
-        self.indent_level = 0 # how many indents in currently
+        self.indent_level = 0 # how many indents currently
         self.dents_list: list[Token] = [] # stores indents and dedents
         self.checked_indent = False
         self.lines = {}
@@ -110,17 +108,7 @@ class Tokenizer:
         return Pos(self.idx, self.col, self.ln)
 
     def current_line(self) -> str:
-        previous_line_break = self.text.rfind('\n', 0, self.idx)
-        if previous_line_break == -1:
-            # it's first line
-            previous_line_break = 0
-        
-        begin = previous_line_break + int(previous_line_break != 0)
-        next_line_break = self.text.find('\n', self.idx)
-        if next_line_break == -1:
-            # this is last line
-            next_line_break = len(self.text)
-        return self.text[begin : next_line_break]
+        return self.lines[self.ln]
 
     def next_token(self) -> tuple[Token | None, str | None]:
         token = None
@@ -372,10 +360,18 @@ if len(argv) == 3 and argv[1].lower() == '-f':
     with open(argv[2], 'r') as source_file:
         source = str(source_file.read()) + '\n'
         print(source)
-        for t in Tokenizer(source):
+        tokenizer = Tokenizer(source)
+        for t in tokenizer:
             print(t)
+        print('Lines:\n')
+        for line in tokenizer.lines:
+            print(line)
 else:
     source = argv[1]
     print(source)
-    for t in Tokenizer(source):
+    tokenizer = Tokenizer(source)
+    for t in tokenizer:
         print(t)
+    print('Lines:\n')
+    for line in tokenizer.lines:
+        print(line)
