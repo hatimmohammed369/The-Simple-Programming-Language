@@ -97,6 +97,8 @@ class Tokenizer:
         self.indent_level = 0 # how many indents in currently
         self.dents_list: list[Token] = [] # stores indents and dedents
         self.checked_indent = False
+        self.lines = {}
+        self.line_break_index= 0
 
     def __len__(self):
         return len(self.tokens_list)
@@ -127,6 +129,8 @@ class Tokenizer:
                 # NEWLINE
                 token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
                 token.pos_end = Pos(self.idx+1, self.col+1, self.ln)
+                self.lines[self.line_break_index] = self.text[self.line_break_index+1: self.idx]
+                self.line_break_index = self.idx
                 self.idx += 1
                 if self.idx < len(self.text):
                     self.current_char = self.text[self.idx]
@@ -223,10 +227,15 @@ class Tokenizer:
                 else:
                     # Things like +, -, /, *, any thing single character
                     token.value = self.text[self.idx:self.idx+1]
-                    if self[-1].name == 'CONST_NAME' and token.value == '=':
+                    if self.tokens_list[-1].name == 'CONST_NAME' and token.value == '=':
                         # Constant re-assignment, illegal
-                        error = '\nConstant re-assignment error:\n' + self.current_line() + '\n' + (' ' * self.col)
-                        error += '^\n' + (' ' * self.col) + f'Constant ({self[-1].value}) re-assignment\n'
+                        error = f'Line {self.ln + 1}:\n'
+                        error += 'Constant re-assignment error:\n' + self.current_line() + '\n' + (' ' * self.col)
+                        const_name_token = self.tokens_list[-1]
+                        error += '^\n' + (' ' * self.col) + f'Constant ({const_name_token.value}) re-assignment\n'
+                        const_declaration_line = self.identifiers_table[const_name_token.value][0].pos_begin.ln
+                        error += 'Defined here, line {const_declaration_line + 1}:\n'
+                        error += self.lines[const_declaration_line]
                         return None, error
                 
                 self.idx += len(token.value)
@@ -366,10 +375,7 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in Tokenizer(source):
             print(t)
 else:
-    source = """write(0)
-function f() returns int => {
-    write("empty fucntion");
-}"""
+    source = argv[1]
     print(source)
     for t in Tokenizer(source):
         print(t)
