@@ -133,7 +133,8 @@ class Tokenizer:
                 # NEWLINE
                 token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
                 token.pos_end = Pos(self.idx+1, self.col+1, self.ln)
-                self.lines[self.last_line_break_index] = self.text[self.last_line_break_index+int(self.last_line_break_index != 0): self.idx]
+                llbi = self.last_line_break_index
+                self.lines[llbi] = self.text[llbi+int(llbi != 0): self.idx]
                 self.last_line_break_index = self.idx
                 self.idx += 1
                 if self.idx < len(self.text):
@@ -170,8 +171,7 @@ class Tokenizer:
                     token.name = "END_LABEL"
                 else:
                     token.name = 'F-STRING' if match_value[0] == 'f' else 'STRING'
-                begin = self.pos()
-                token.pos_begin = begin
+                token.pos_begin = begin = self.pos()
                 self.idx = string.end()
                 self.col += len(token.value)
                 if self.idx < len(self.text):
@@ -192,8 +192,8 @@ class Tokenizer:
                     # we reached End Of File
                     current_identifier = self.text[self.idx:]
                 
-                begin = self.pos()
-                token = Token(pos_begin=begin)
+                token = Token()
+                token.pos_begin = begin = self.pos()
                 token.value = current_identifier
                 self.idx += len(token.value)
                 self.col += len(token.value)
@@ -254,9 +254,8 @@ class Tokenizer:
                 token.name = punctuation_dict[token.value]
                 token.pos_end = Pos(begin.idx+len(token.value), begin.col+len(token.value), self.ln)
 
-            elif re.match(pattern=r'[.0-9]', string=self.current_char):
+            elif number_match := number_pattern.search(string=self.text, pos=self.idx):
                 # A NUMBER
-                number_match = number_pattern.search(string=self.text, pos=self.idx)
                 match_value = number_match.group()
                 begin =   self.pos()
                 token =   Token(name='NUMBER', pos_begin=begin)
