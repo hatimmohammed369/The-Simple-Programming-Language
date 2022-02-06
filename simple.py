@@ -296,6 +296,7 @@ class Tokenizer:
                     first_non_white_space = re.compile(r'[^\s]').search(self.text, pos=self.idx, endpos=next_line_break)
                     first_non_white_space = first_non_white_space.start()
                     captured_indent = self.text[self.idx:first_non_white_space]
+                    captured_indent = captured_indent.replace('\t', ' ' * 4)
                     error = None
                     current_level = len(captured_indent) // 4
                     if self.indent_level != current_level:
