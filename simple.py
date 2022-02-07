@@ -134,19 +134,20 @@ class Tokenizer:
         return current_line
 
     def advance(self, steps):
-        if self.current_char == '\n':
-            llbi = self.last_line_break_index
-            self.lines[self.ln] = self.text[llbi + int(llbi != 0): self.idx]
-            self.check_indent = False
-            self.col = 0
-            self.ln += 1
-        else:
-            self.col += steps
         self.idx += steps
         if self.idx < len(self.text):
             self.current_char = self.text[self.idx]
         else:
             self.current_char = ''
+        if 0 <= self.idx - 1 and self.text[self.idx - 1] == '\n':
+            llbi = self.last_line_break_index
+            self.lines[self.ln] = self.text[llbi + int(llbi != 0): self.idx]
+            self.last_line_break_index = self.idx - 1
+            self.checked_indent = False
+            self.col = 0
+            self.ln += 1
+        else:
+            self.col += steps
         return self
 
     def next_token(self) -> tuple[Token | None, str | None]:
@@ -290,9 +291,13 @@ class Tokenizer:
                     captured_indent = self.text[self.idx:first_non_white_space]
                     captured_indent = captured_indent.replace('\t', ' ' * 4)
                     error = None
+                    error = ''
+                    if len(captured_indent) % 4 != 0:
+                        # Syntax Error: Indentation must a multiple of 4
+                        error += f'In line {self.ln + 1}, you have a Syntax Error: Indentation must be a multiple of 4\n'
+                        error += self.current_line() + '\n'
                     current_level = len(captured_indent) // 4
                     if self.indent_level != current_level:
-                        error = ''
                         if ' ' in captured_indent and '\t' in captured_indent:
                             # Syntax Error: Mixing spaces and tabs in indentation
                             error += f'Line {self.ln + 1}:\n'
@@ -331,8 +336,8 @@ class Tokenizer:
                         else:
                             self.checked_indent = False
                         
-                        if error == '':
-                            error = None
+                    if error == '':
+                        error = None
             else:
                 token, error = self.next_token()
             #
@@ -356,9 +361,8 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in tokenizer:
             print(t)
 else:
-    source = """const int x:=1;
-write(x)
-x=12;
+    source = """if x is 1 then
+  write(x)
 """
     tokenizer = Tokenizer(source)
     for t in tokenizer:
