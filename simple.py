@@ -126,26 +126,33 @@ class Tokenizer:
             self.lines[self.ln] = current_line = self.text[begin:end]
         return current_line
 
+    def advance(self, steps):
+        if self.current_char == '\n':
+            llbi = self.last_line_break_index
+            self.lines[self.ln] = self.text[llbi + int(llbi != 0): self.idx]
+            self.check_indent = False
+            self.col = 0
+            self.ln += 1
+        else:
+            self.col += steps
+        self.idx += steps
+        if self.idx < len(self.text):
+            self.current_char = self.text[self.idx]
+        else:
+            self.current_char = ''
+        return self
+
     def next_token(self) -> tuple[Token | None, str | None]:
         token = None
+        steps = 1
         if self.current_char != '': # it is not EOF
             if self.current_char == '\n':
                 # NEWLINE
                 token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
                 token.pos_end = Pos(token.pos_begin.idx+1, token.pos_begin.col+1, self.ln)
-                llbi = self.last_line_break_index
-                self.lines[llbi] = self.text[llbi+int(llbi != 0): self.idx]
-                self.last_line_break_index = self.idx
-                self.idx += 1
-                if self.idx < len(self.text):
-                    self.current_char = self.text[self.idx]
-                    self.col = 0
-                    self.checked_indent = False
-                    self.ln += 1
-                else:
-                    self.current_char= ''
-                steps = len(token.value)
+                steps = 1
 
+            # self.current_char == '#' 
             elif self.current_char == '#':
                 # COMMENT
                 next_new_line = self.text.find('\n', self.idx) # NEWLINE is the only thing that stops a comment
@@ -154,13 +161,9 @@ class Tokenizer:
                 if next_new_line != -1:
                     # this comment is not in last line
                     token.value = self.text[self.idx:next_new_line]
-                    self.current_char = '\n'
                 else:
                     # this comment is in last line
                     token.value = self.text[self.idx:]
-                    self.current_char = ''
-                self.idx += len(token.value)
-                self.col += len(token.value)
                 token.pos_end = Pos(token.pos_begin.idx+len(token.value), token.pos_begin.col+len(token.value), self.ln)
                 steps = len(token.value)
 
@@ -174,12 +177,6 @@ class Tokenizer:
                 else:
                     token.name = 'F-STRING' if match_value[0] == 'f' else 'STRING'
                 token.pos_begin = begin = self.pos()
-                self.idx = string.end()
-                self.col += len(token.value)
-                if self.idx < len(self.text):
-                    self.current_char = self.text[self.idx]
-                else:
-                    self.current_char = ''
                 token.pos_end = Pos(begin.idx+len(token.value), begin.col+len(token.value), begin.ln)
                 steps = len(token.value)
 
@@ -198,15 +195,7 @@ class Tokenizer:
                 token = Token()
                 token.pos_begin = begin = self.pos()
                 token.value = current_identifier
-                self.idx += len(token.value)
-                self.col += len(token.value)
                 token.pos_end = Pos(begin.idx+len(token.value), begin.idx+len(token.value), self.ln)
-                
-                if self.idx < len(self.text):
-                    self.current_char = self.text[self.idx]
-                else:
-                    # End Of File
-                    self.current_char = ''
                 
                 if token.value in language_words:
                     token.name = 'KEYWORD'
@@ -246,15 +235,6 @@ class Tokenizer:
                         error += self.lines[const_declaration_line]
                         return None, error
                 
-                self.idx += len(token.value)
-                self.col += len(token.value)
-                
-                if self.idx < len(self.text):
-                    # Not Just Yet
-                    self.current_char = self.text[self.idx]
-                else:
-                    # End Of File
-                    self.current_char = ''
                 token.name = punctuation_dict[token.value]
                 token.pos_end = Pos(begin.idx+len(token.value), begin.col+len(token.value), self.ln)
                 steps = len(token.value)
@@ -272,26 +252,8 @@ class Tokenizer:
                     token.value = float(match_value)
                 end=Pos(token.pos_begin.idx+len(str(token.value)), token.pos_begin.col+len(str(token.value)), self.ln)
                 token.pos_end = end
-                self.idx = number_match.end()
-                self.col += len(str(token.value))
-                if self.idx < len(self.text):
-                    self.current_char = self.text[self.idx]
-                else:
-                    self.current_char = ''
                 steps = len(str(token.value)) # since token.value is a number, type-casted in lines 267=>272
-
-            else:
-                # This is for characters like spaces, like in 1 + 2
-                # spaces around + are redundant and dont affect sematics
-                if self.idx + 1 < len(self.text):
-                    self.idx += 1
-                    self.current_char = self.text[self.idx]
-                else:
-                    # End Of File
-                    self.current_char = ''
-                    self.idx = len(self.text)
-                self.col += 1
-                steps = 1
+        self.advance(steps)
         if token is not None:
             # we have a valid token
             self.tokens_list.append(token)
@@ -369,7 +331,7 @@ class Tokenizer:
             #
             #
             if error is not None:
-                print(error)
+                print('\nError:\n' + error)
                 exit(0)
             if token is not None:
                 yield token
@@ -383,23 +345,14 @@ from sys import argv
 if len(argv) == 3 and argv[1].lower() == '-f':
     with open(argv[2], 'r') as source_file:
         source = str(source_file.read()) + '\n'
-        print(source)
         tokenizer = Tokenizer(source)
         for t in tokenizer:
             print(t)
-        print('Lines:\n')
-        for line in tokenizer.lines.values():
-            print(line)
 else:
     source = """const int x:=1;
 write(x)
 x=12;
 """
-
-    print(source)
     tokenizer = Tokenizer(source)
     for t in tokenizer:
         print(t)
-    print('Lines:\n')
-    for line in tokenizer.lines.values():
-        print(line)
