@@ -290,7 +290,6 @@ class Tokenizer:
                     first_non_white_space = first_non_white_space.start()
                     captured_indent = self.text[self.idx:first_non_white_space]
                     captured_indent = captured_indent.replace('\t', ' ' * 4)
-                    error = None
                     error = ''
                     if len(captured_indent) % 4 != 0:
                         # Syntax Error: Indentation must a multiple of 4
@@ -363,7 +362,7 @@ if len(argv) == 3 and argv[1].lower() == '-f':
             print(t)
 else:
     source = """if x is 1 then
-    write(x)
+   write(x)
 """
     tokenizer = Tokenizer(source)
     for t in tokenizer:
