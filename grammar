@@ -65,7 +65,8 @@ paramter: [ 'const' ] data_type name
 
 # Operators
 = :=
-+ - * / mod **
++=
++ - * / % mod ** ++ --
 ~ >> << | &
 < <= > >= == !=
 not and or 
