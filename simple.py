@@ -291,7 +291,7 @@ class Tokenizer:
                     self.current_char = ''
                     self.idx = len(self.text)
                 self.col += 1
-                steps = len(token.value)
+                steps = 1
         if token is not None:
             # we have a valid token
             self.tokens_list.append(token)
