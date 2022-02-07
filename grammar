@@ -14,7 +14,7 @@ read('${name}')
 
 # Variables and Constants
 # Data types
-int float string array
+int float string array boolean null
 
 # Variable/Constant declaration
 [ const ] data_type names [= values][;]
@@ -36,9 +36,9 @@ end ["if condition"]
 
 # match statement
 match name:
-  case val0 | val1 | ... | valn[:]
+  case val0 or val1 or ... or valn[:]
     statement(s)
-  case (x0 & x1) | (x2)[:]
+  case (x0 and x1) or (x2)[:]
     statement(s)
   .
   .
