@@ -34,8 +34,13 @@ language_words = ['const', 'int', 'float', 'string', 'array', 'null', 'true', 'f
                   'break', 'continue', 'if', 'do', 'then', 'while', 'foreach', 'match', 'case', 'end',
                   'function', 'return', 'returns']
 
-punctuation = [';', ':', ',', '[', ']', '{', '}', '(', ')', ':=', '=', '=>', '+', '-', '*', '**', '/', '//', '%', '~', '&', '|', '>>', '<<',
-               '<', '<=', '>', '>=', '==', '!=' , '+=', '++', '--']
+punctuation = [';', ':', ',',
+               '[', ']', '{', '}', '(', ')',
+               ':=', '=',
+               '=>', '->',
+               '+', '-', '*', '**', '/', '//', '%', '++', '--', 
+               '~', '&', '|', '>>', '<<',
+               '<', '<=', '>', '>=', '==', '!=' , '+=']
 
 punctuation_dict = \
 { 
@@ -72,6 +77,7 @@ punctuation_dict = \
    '+=' : 'PLUS_EQUAL',
    '++' : 'PLUS_PLUS',
    '--' : 'MINUS_MINUS',
+   '->' : 'RETURN_TYPE_ARROW'
 }
 
 followers = {
