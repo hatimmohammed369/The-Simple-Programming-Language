@@ -95,8 +95,8 @@ class Tokenizer:
         self.indent_level = 0 # how many indents currently
         self.dents_list: list[Token] = [] # stores indents and dedents
         self.checked_indent = False
-        self.lines = {}
-        self.last_line_break_index= 0
+        self.lines: dict[int, str] = {}
+        self.last_line_break_index = 0
 
     def __len__(self):
         return len(self.tokens_list)
@@ -132,7 +132,7 @@ class Tokenizer:
             if self.current_char == '\n':
                 # NEWLINE
                 token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
-                token.pos_end = Pos(self.idx+1, self.col+1, self.ln)
+                token.pos_end = Pos(token.pos_begin.idx+1, token.pos_begin.col+1, self.ln)
                 llbi = self.last_line_break_index
                 self.lines[llbi] = self.text[llbi+int(llbi != 0): self.idx]
                 self.last_line_break_index = self.idx
@@ -144,6 +144,7 @@ class Tokenizer:
                     self.ln += 1
                 else:
                     self.current_char= ''
+                steps = len(token.value)
 
             elif self.current_char == '#':
                 # COMMENT
@@ -161,6 +162,7 @@ class Tokenizer:
                 self.idx += len(token.value)
                 self.col += len(token.value)
                 token.pos_end = Pos(token.pos_begin.idx+len(token.value), token.pos_begin.col+len(token.value), self.ln)
+                steps = len(token.value)
 
             elif string := string_pattern.match(string=self.text, pos=self.idx):
                 # STRING
@@ -179,6 +181,7 @@ class Tokenizer:
                 else:
                     self.current_char = ''
                 token.pos_end = Pos(begin.idx+len(token.value), begin.col+len(token.value), begin.ln)
+                steps = len(token.value)
 
             elif re.match(pattern=r'[_a-zA-Z]', string=self.current_char):
                 # IDENTIFIER
@@ -220,6 +223,7 @@ class Tokenizer:
                             token.name = 'CONST_NAME'
                         else:
                             token.name = 'NAME'
+                steps = len(token.value)
 
             elif self.current_char in punctuation:
                 # SOMETHING LIKE *, +, {, %, ;, .....
@@ -253,8 +257,9 @@ class Tokenizer:
                     self.current_char = ''
                 token.name = punctuation_dict[token.value]
                 token.pos_end = Pos(begin.idx+len(token.value), begin.col+len(token.value), self.ln)
+                steps = len(token.value)
 
-            elif number_match := number_pattern.search(string=self.text, pos=self.idx):
+            elif number_match := number_pattern.match(string=self.text, pos=self.idx):
                 # A NUMBER
                 match_value = number_match.group()
                 begin =   self.pos()
@@ -273,6 +278,8 @@ class Tokenizer:
                     self.current_char = self.text[self.idx]
                 else:
                     self.current_char = ''
+                steps = len(str(token.value)) # since token.value is a number, type-casted in lines 267=>272
+
             else:
                 # This is for characters like spaces, like in 1 + 2
                 # spaces around + are redundant and dont affect sematics
@@ -284,6 +291,7 @@ class Tokenizer:
                     self.current_char = ''
                     self.idx = len(self.text)
                 self.col += 1
+                steps = len(token.value)
         if token is not None:
             # we have a valid token
             self.tokens_list.append(token)
@@ -380,7 +388,7 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in tokenizer:
             print(t)
         print('Lines:\n')
-        for line in tokenizer.lines:
+        for line in tokenizer.lines.values():
             print(line)
 else:
     source = """const int x:=1;
@@ -393,5 +401,5 @@ x=12;
     for t in tokenizer:
         print(t)
     print('Lines:\n')
-    for line in tokenizer.lines:
+    for line in tokenizer.lines.values():
         print(line)
