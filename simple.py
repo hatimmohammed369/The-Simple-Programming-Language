@@ -141,7 +141,7 @@ class Tokenizer:
             self.current_char = ''
         if 0 <= self.idx - 1 and self.text[self.idx - 1] == '\n':
             llbi = self.last_line_break_index
-            self.lines[self.ln] = self.text[llbi + int(llbi != 0): self.idx]
+            self.lines[self.ln] = self.text[llbi + int(llbi != 0): self.idx - 1]
             self.last_line_break_index = self.idx - 1
             self.checked_indent = False
             self.col = 0
