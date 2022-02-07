@@ -296,6 +296,7 @@ class Tokenizer:
                         # Syntax Error: Indentation must a multiple of 4
                         error += f'In line {self.ln + 1}, you have a Syntax Error: Indentation must be a multiple of 4\n'
                         error += self.current_line() + '\n'
+                        error += '^' * len(captured_indent) + f' Indent of {len(captured_indent)} spaces'
                     current_level = len(captured_indent) // 4
                     if self.indent_level != current_level:
                         if ' ' in captured_indent and '\t' in captured_indent:
@@ -362,7 +363,7 @@ if len(argv) == 3 and argv[1].lower() == '-f':
             print(t)
 else:
     source = """if x is 1 then
-  write(x)
+    write(x)
 """
     tokenizer = Tokenizer(source)
     for t in tokenizer:
