@@ -29,13 +29,13 @@ class Token:
 
 data_types = ['int', 'float', 'string', 'boolean', 'array', 'null']
 
-language_words = ['const', 'int', 'float', 'string', 'array', 'null', 'true', 'false', 'boolean',
+language_words = ['const', 'int', 'float', 'string', 'array', 'null', 'true', 'false', 'boolean', 'mod',
                   'is', 'IS', 'not', 'and', 'or',
                   'break', 'continue', 'if', 'do', 'then', 'while', 'foreach', 'match', 'case', 'end',
                   'function', 'return', 'returns']
 
 punctuation = [';', ':', ',', '[', ']', '{', '}', '(', ')', ':=', '=', '=>', '+', '-', '*', '**', '/', '//', '%', '~', '&', '|', '>>', '<<',
-               '<', '<=', '>', '>=', '==', '!=' , '+=', '++']
+               '<', '<=', '>', '>=', '==', '!=' , '+=', '++', '--']
 
 punctuation_dict = \
 { 
@@ -71,10 +71,11 @@ punctuation_dict = \
    '!=' : 'NOT_EQUAL',
    '+=' : 'PLUS_EQUAL',
    '++' : 'PLUS_PLUS',
+   '--' : 'MINUS_MINUS',
 }
 
 followers = {
-    '=', '>', '<', '+', '*'
+    '=', '>', '<', '+', '*', '-'
 }
 
 int_pattern = re.compile(r'[+-]{0,1}\d+([eE][+-]{0,1}\d+){0,1}')
