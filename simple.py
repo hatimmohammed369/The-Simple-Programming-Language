@@ -27,20 +27,22 @@ class Token:
         return f'Token({self.name}, {repr(self.value)}, {(begin)}-{end})'
     __str__ = __repr__
 
-data_types = ['int', 'float', 'string', 'boolean', 'array', 'null']
+data_types = ('int', 'float', 'string', 'boolean', 'array', 'null')
 
-language_words = ['const', 'int', 'float', 'string', 'array', 'null', 'true', 'false', 'boolean', 'mod',
+language_words = ('const', 'int', 'float', 'string', 'array', 'null', 'true', 'false', 'boolean', 'mod',
                   'is', 'IS', 'not', 'and', 'or',
                   'break', 'continue', 'if', 'do', 'then', 'while', 'foreach', 'match', 'case', 'end',
-                  'function', 'return', 'returns']
+                  'function', 'return', 'returns')
 
-punctuation = [';', ':', ',',
+block_statements = ('if', 'foreach', 'while', 'match', 'function')
+
+punctuation = (';', ':', ',',
                '[', ']', '{', '}', '(', ')',
                ':=', '=',
                '=>', '->',
                '+', '-', '*', '**', '/', '//', '%', '++', '--', 
                '~', '&', '|', '>>', '<<',
-               '<', '<=', '>', '>=', '==', '!=' , '+=']
+               '<', '<=', '>', '>=', '==', '!=' , '+=')
 
 punctuation_dict = \
 { 
@@ -80,9 +82,7 @@ punctuation_dict = \
    '->' : 'RETURN_TYPE_ARROW'
 }
 
-followers = {
-    '=', '>', '<', '+', '*', '-'
-}
+followers = ('=', '>', '<', '+', '*', '-')
 
 int_pattern = re.compile(r'[+-]{0,1}\d+([eE][+-]{0,1}\d+){0,1}')
 float_pattern = re.compile(r'[+-]{0,1}\d+[.]\d*([eE][+-]{0,1}\d+){0,1}|[+-]{0,1}\d*[.]\d+([eE][+-]{0,1}\d+){0,1}')
@@ -104,6 +104,7 @@ class Tokenizer:
         self.checked_indent = False
         self.lines: dict[int, str] = {}
         self.last_line_break_index = 0
+        self.contexts_list = []
 
     def __len__(self):
         return len(self.tokens_list)
@@ -207,6 +208,8 @@ class Tokenizer:
                 
                 if token.value in language_words:
                     token.name = 'KEYWORD'
+                    if token.value in block_statements:
+                        self.contexts_list.append(token.value)
                 else:
                     if current_identifier in self.identifiers_table:
                         # we met this identifier before
@@ -214,12 +217,15 @@ class Tokenizer:
                         self.identifiers_table[token.value].append(token)
                     else:
                         # A new identifier
+                        token.name = 'NAME'
                         self.identifiers_table[token.value] = [token]
                         if len(self) >= 2 and self.tokens_list[-1].value in data_types and self.tokens_list[-2].value == 'const':
                             # things like: const boolean p := true;
-                            token.name = 'CONST_NAME'
+                            token.name = 'CONST_' + token.name
                         else:
                             token.name = 'NAME'
+                        if len(self.contexts_list) != 0 and self.contexts_list[-1] == 'function':
+                            token.name = 'FUNCTION_' + token.name
                 steps = len(token.value)
 
             elif self.current_char in punctuation:
@@ -361,9 +367,12 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in tokenizer:
             print(t)
 else:
-    source = """if x is 1 then
-   write(x)
+    source = """int x := 123;
+function f(const int x) -> int => {
+    return x;
+}
 """
     tokenizer = Tokenizer(source)
     for t in tokenizer:
         print(t)
+    print(tokenizer.contexts_list)
