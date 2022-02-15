@@ -350,10 +350,7 @@ class Tokenizer:
 from sys import argv
 if len(argv) == 3 and argv[1].lower() == '-f':
     with open(argv[2], 'r') as source_file:
-        source = str(source_file.read()) + '\n'
-        tokenizer = Tokenizer(source)
-        for t in tokenizer:
-            print(t)
+        source = str(source_file.read())
 else:
     source = """
 int x := 123;
@@ -364,7 +361,8 @@ function f(const int x) -> int => {
 }
 
 """
-    tokenizer = Tokenizer(source)
-    for t in tokenizer:
-        print(t)
-    print(tokenizer.contexts_list)
+tokenizer = Tokenizer(source)
+for t in tokenizer:
+    print(t)
+
+assert len(tokenizer.lines) == tokenizer.text.count('\n'), 'Lines are not detected correctly'
