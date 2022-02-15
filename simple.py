@@ -102,9 +102,8 @@ class Tokenizer:
         self.indent_level = 0 # how many indents currently
         self.dents_list: list[Token] = [] # stores indents and dedents
         self.checked_indent = False
-        self.lines: dict[int, str] = {}
+        self.lines: dict[int, dict] = {}
         self.last_line_break_index = 0
-        self.contexts_list = []
 
     def __len__(self):
         return len(self.tokens_list)
@@ -117,21 +116,16 @@ class Tokenizer:
 
     def current_line(self) -> str:
         try:
-            current_line = self.lines[self.ln]
+            current_line = self.lines[self.ln]['value']
         except KeyError:
             # we haven't yet added current line
-            begin = self.text.rfind('\n', 0, self.idx)
-            if begin == -1:
-                # this is first line
-                begin = 0
+            begin = self.last_line_break_index + 1
+            if self.text[self.idx] == '\n':
+                end = self.idx
             else:
-                begin += 1 # so as we dont include previous line break
-            
-            end = self.text.find('\n', self.idx)
-            if end == -1:
-                # this is last line
-                end = len(self.text)
-            self.lines[self.ln] = current_line = self.text[begin:end]
+                end = self.text.find('\n', self.idx+1)
+            current_line = self.text[begin:end]
+            self.lines[self.ln] = {'value': current_line, 'pos': (begin, end)}
         return current_line
 
     def advance(self, steps):
@@ -140,9 +134,7 @@ class Tokenizer:
             self.current_char = self.text[self.idx]
         else:
             self.current_char = ''
-        if 0 <= self.idx - 1 and self.text[self.idx - 1] == '\n':
-            llbi = self.last_line_break_index
-            self.lines[self.ln] = self.text[llbi + int(llbi != 0): self.idx - 1]
+        if steps == 1 and self.text[self.idx - 1] == '\n':
             self.last_line_break_index = self.idx - 1
             self.checked_indent = False
             self.col = 0
@@ -208,8 +200,6 @@ class Tokenizer:
                 
                 if token.value in language_words:
                     token.name = 'KEYWORD'
-                    if token.value in block_statements:
-                        self.contexts_list.append(token.value)
                 else:
                     if current_identifier in self.identifiers_table:
                         # we met this identifier before
@@ -219,13 +209,6 @@ class Tokenizer:
                         # A new identifier
                         token.name = 'NAME'
                         self.identifiers_table[token.value] = [token]
-                        if len(self) >= 2 and self.tokens_list[-1].value in data_types and self.tokens_list[-2].value == 'const':
-                            # things like: const boolean p := true;
-                            token.name = 'CONST_' + token.name
-                        else:
-                            token.name = 'NAME'
-                        if len(self.contexts_list) != 0 and self.contexts_list[-1] == 'function':
-                            token.name = 'FUNCTION_' + token.name
                 steps = len(token.value)
 
             elif self.current_char in punctuation:
@@ -246,7 +229,7 @@ class Tokenizer:
                         error += '^\n' + (' ' * self.col) + f'Constant ({const_name_token.value}) re-assignment\n'
                         const_declaration_line = self.identifiers_table[const_name_token.value][0].pos_begin.ln
                         error += f'Defined here, line {const_declaration_line + 1}:\n'
-                        error += self.lines[const_declaration_line]
+                        error += self.lines[const_declaration_line]['value']
                         return None, error
                 
                 token.name = punctuation_dict[token.value]
@@ -280,19 +263,21 @@ class Tokenizer:
                 # Check for indentation
                 current_line = self.current_line()
                 self.checked_indent = True
-                next_line_break = self.text.find('\n', self.idx + int(self.text[self.idx] == '\n'))
-                if next_line_break == -1:
+                current_line_line_break = self.idx
+                if self.text[self.idx] != '\n':
+                    current_line_line_break = self.text.find('\n', self.idx)
+                if current_line_line_break == -1:
                     # this is last line
-                    next_line_break = len(self.text)
+                    current_line_line_break = len(self.text)
                 if len(current_line) == 0 or re.fullmatch(pattern=r'\s+', string=current_line):
                     # this line is empty or it is just whitespaces
-                    self.idx = next_line_break
-                    self.col += 1
+                    self.idx = current_line_line_break
+                    self.col += len(current_line)
                     self.current_char = '\n'
                     continue
                 else:
                     # this line contains some non-whitespaces
-                    first_non_white_space = re.compile(r'[^\s]').search(self.text, pos=self.idx, endpos=next_line_break)
+                    first_non_white_space = re.compile(r'[^\s]').search(self.text, pos=self.idx, endpos=current_line_line_break)
                     first_non_white_space = first_non_white_space.start()
                     captured_indent = self.text[self.idx:first_non_white_space]
                     captured_indent = captured_indent.replace('\t', ' ' * 4)
@@ -367,10 +352,14 @@ if len(argv) == 3 and argv[1].lower() == '-f':
         for t in tokenizer:
             print(t)
 else:
-    source = """int x := 123;
+    source = """
+int x := 123;
 function f(const int x) -> int => {
+
     return x;
+
 }
+
 """
     tokenizer = Tokenizer(source)
     for t in tokenizer:
