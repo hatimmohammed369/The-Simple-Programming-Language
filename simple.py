@@ -2,12 +2,15 @@
 
 import re
 from typing import Any
+from dataclasses import dataclass
 
 ####################################################################################################
 
 # Tokenizer: takes texts and turns it into "words" (tokens)
-
-from dataclasses import dataclass
+@dataclass(init=True, repr=True)
+class Line:
+    value: str = ''
+    pos: tuple[int, int] = 0, 0
 
 @dataclass(init=True, eq=True, repr=True)
 class Pos:
@@ -102,7 +105,7 @@ class Tokenizer:
         self.indent_level = 0 # how many indents currently
         self.dents_list: list[Token] = [] # stores indents and dedents
         self.checked_indent = False
-        self.lines: dict[int, dict] = {}
+        self.lines: dict[int, Line] = {}
         self.last_line_break_index = 0
 
     def __len__(self):
@@ -116,7 +119,7 @@ class Tokenizer:
 
     def current_line(self) -> str:
         try:
-            current_line = self.lines[self.ln]['value']
+            current_line = self.lines[self.ln].value
         except KeyError:
             # we haven't yet added current line
             begin = self.last_line_break_index + 1
@@ -125,7 +128,7 @@ class Tokenizer:
             else:
                 end = self.text.find('\n', self.idx+1)
             current_line = self.text[begin:end]
-            self.lines[self.ln] = {'value': current_line, 'pos': (begin, end)}
+            self.lines[self.ln] = Line(value = current_line, pos = (begin, end))
         return current_line
 
     def advance(self, steps):
@@ -229,7 +232,7 @@ class Tokenizer:
                         error += '^\n' + (' ' * self.col) + f'Constant ({const_name_token.value}) re-assignment\n'
                         const_declaration_line = self.identifiers_table[const_name_token.value][0].pos_begin.ln
                         error += f'Defined here, line {const_declaration_line + 1}:\n'
-                        error += self.lines[const_declaration_line]['value']
+                        error += self.lines[const_declaration_line].value
                         return None, error
                 
                 token.name = punctuation_dict[token.value]
