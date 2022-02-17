@@ -10,7 +10,8 @@ from dataclasses import dataclass
 @dataclass(init=True, repr=True)
 class Line:
     value: str = ''
-    pos: tuple[int, int] = 0, 0
+    begin: int = 0
+    end:   int = 0
 
 @dataclass(init=True, eq=True, repr=True)
 class Pos:
@@ -128,7 +129,7 @@ class Tokenizer:
             else:
                 end = self.text.find('\n', self.idx+1)
             current_line = self.text[begin:end]
-            self.lines[self.ln] = Line(value = current_line, pos = (begin, end))
+            self.lines[self.ln] = Line(current_line, begin, end)
         return current_line
 
     def advance(self, steps):
