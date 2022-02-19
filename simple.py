@@ -105,7 +105,6 @@ class Tokenizer:
         self.tokens_list: list[Token] = []
         self.identifiers_table: dict[str, list[Token]] = {}
         self.indent_stack = [0] # how many indents currently
-        self.dents_list: list[Token] = [] # stores indents and outdents
         self.checked_indent = False
         self.lines: dict[int, Line] = {}
         self.last_line_break_index = 0
@@ -303,16 +302,15 @@ class Tokenizer:
                     if error == '':
                         # this is not first line
                         # Dont add Indent/Dedent token only if captured_indent_level is not 0
-                        current_indent_level = self.indent_stack[0]
+                        current_indent_level = self.indent_stack[-1]
                         
                         begin = self.pos()
                         token = Token(value=captured_indent, pos_begin=begin)
                         token.pos_end = Pos(begin.idx+len(captured_indent), begin.col+len(captured_indent), self.ln)
                         if captured_indent_level < current_indent_level:
-                            # DEDENT
-                            while self.indent_stack[0] != captured_indent_level:
-                                self.indent_stack.pop()
-                            token.name = 'DEDENT'
+                            # OUTDENT
+                            self.indent_stack.pop(-1)
+                            token.name = 'OUTDENT'
                         elif current_indent_level < captured_indent_level:
                             # INDENT
                             self.indent_stack.append(captured_indent_level)
@@ -329,7 +327,6 @@ class Tokenizer:
                         if token is not None:
                             # dont add indent/outdent token if it has no name, this means there's no indent or outdent
                             self.tokens_list.append(token)
-                            self.dents_list.append(token)
                     
                     if error == '':
                         error = None
