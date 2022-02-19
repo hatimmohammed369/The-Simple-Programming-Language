@@ -93,6 +93,7 @@ float_pattern = re.compile(r'[+-]{0,1}\d+[.]\d*([eE][+-]{0,1}\d+){0,1}|[+-]{0,1}
 number_pattern = re.compile(float_pattern.pattern + '|' + int_pattern.pattern)
 string_pattern = re.compile(r'f{0,1}".*?(?<!\\)"')
 indent_pattern = re.compile(r'[ ]{4}|[\t]') # 4 consecutive spaces or a single tab
+name_pattern = re.compile(r'[_a-zA-Z][_a-zA-Z0-9]*')
 
 class Tokenizer:
     def __init__(self, text: str):
@@ -188,18 +189,10 @@ class Tokenizer:
                 token.pos_end = Pos(begin.idx+len(token.value), begin.col+len(token.value), begin.ln)
                 steps = len(token.value)
 
-            elif re.match(pattern=r'[_a-zA-Z]', string=self.current_char):
+            elif name := name_pattern.match(string=self.text, pos=self.idx):
                 # IDENTIFIER
-                # an identifier or a keyword, search for nearest delimiter, (any non-identifier character)
-                next_delimiter = re.compile(r'[^_0-9a-zA-Z]').search(string=self.text, pos=self.idx)
-                current_identifier = ''
-                if next_delimiter is not None:
-                    # we have not reached End Of File
-                    current_identifier = self.text[self.idx: next_delimiter.start()]
-                else:
-                    # we reached End Of File
-                    current_identifier = self.text[self.idx:]
-                
+                # an identifier or a keyword
+                current_identifier = name.group()
                 token = Token()
                 token.pos_begin = begin = self.pos()
                 token.value = current_identifier
