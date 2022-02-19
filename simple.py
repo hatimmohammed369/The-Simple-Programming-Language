@@ -104,7 +104,7 @@ class Tokenizer:
         self.tokens_list: list[Token] = []
         self.identifiers_table: dict[str, list[Token]] = {}
         self.indent_stack = [0] # how many indents currently
-        self.dents_list: list[Token] = [] # stores indents and dedents
+        self.dents_list: list[Token] = [] # stores indents and outdents
         self.checked_indent = False
         self.lines: dict[int, Line] = {}
         self.last_line_break_index = 0
@@ -313,15 +313,18 @@ class Tokenizer:
                                 # INDENT
                                 self.indent_stack.append(current_level)
                                 token.name = 'INDENT'
+                            else:
+                                # no indent or outdent, make token None
+                                token = None
                             self.idx = first_non_white_space
                             self.col = current_line.find(self.text[first_non_white_space])
                             if self.idx < len(self.text):
                                 self.current_char = self.text[self.idx]
                             else:
                                 self.current_char = ''
-                            self.tokens_list.append(token)
-                            if token.name:
-                                # dont add indent/dedent token if it has no name, this means there's no indent or dedent
+                            if token is not None:
+                                # dont add indent/outdent token if it has no name, this means there's no indent or outdent
+                                self.tokens_list.append(token)
                                 self.dents_list.append(token)
                         else:
                             self.checked_indent = False
