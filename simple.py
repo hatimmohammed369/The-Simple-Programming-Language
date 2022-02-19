@@ -103,7 +103,7 @@ class Tokenizer:
             self.current_char = self.text[0]
         self.tokens_list: list[Token] = []
         self.identifiers_table: dict[str, list[Token]] = {}
-        self.indent_level = 0 # how many indents currently
+        self.indent_stack = [] # how many indents currently
         self.dents_list: list[Token] = [] # stores indents and dedents
         self.checked_indent = False
         self.lines: dict[int, Line] = {}
@@ -282,7 +282,7 @@ class Tokenizer:
                         error += self.current_line() + '\n'
                         error += '^' * len(captured_indent) + f' Indent of {len(captured_indent)} spaces'
                     current_level = len(captured_indent) // 4
-                    if self.indent_level != current_level:
+                    if current_level in self.indent_stack:
                         if ' ' in captured_indent and '\t' in captured_indent:
                             # Syntax Error: Mixing spaces and tabs in indentation
                             error += f'Line {self.ln + 1}:\n'
@@ -299,16 +299,22 @@ class Tokenizer:
                         if error == '':
                             # this is not first line
                             # Dont add Indent/Dedent token only if current_level is not 0
+                            if self.indent_stack:
+                                indent_level = self.indent_stack[0]
+                            else:
+                                indent_level = 0
+
                             begin = self.pos()
                             token = Token(value=captured_indent, pos_begin=begin)
                             token.pos_end = Pos(begin.idx+len(captured_indent), begin.col+len(captured_indent), self.ln)
-                            if current_level < self.indent_level:
+                            if current_level < indent_level:
                                 # DEDENT
-                                self.indent_level -= 1
+                                while self.indent_stack[0] != current_level:
+                                    self.indent_stack.pop()
                                 token.name = 'DEDENT'
-                            elif self.indent_level < current_level:
+                            elif indent_level < current_level:
                                 # INDENT
-                                self.indent_level += 1
+                                self.indent_stack.append(current_level)
                                 token.name = 'INDENT'
                             self.idx = first_non_white_space
                             self.col = current_line.find(self.text[first_non_white_space])
@@ -367,4 +373,4 @@ function f(const int x) -> int => {
 tokenizer = Tokenizer(source)
 for t in tokenizer:
     print(t)
-
+print(tokenizer.indent_stack)
