@@ -328,6 +328,9 @@ class Tokenizer:
                                 self.dents_list.append(token)
                         else:
                             self.checked_indent = False
+                    else:
+                        # this indent/outdent does not belong to any existing block, so this is a Syntax Error
+                        pass
                         
                     if error == '':
                         error = None
