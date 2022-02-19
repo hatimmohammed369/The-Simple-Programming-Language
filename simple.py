@@ -269,10 +269,12 @@ class Tokenizer:
                     # so X's line is all characters between Y and X 
                     # and of course exluding both X and Y because we don't want \n in line representation 
                     current_line_line_break = self.text.find('\n', self.idx)
+                
                 if current_line_line_break == -1:
                     # this is last line
                     current_line_line_break = len(self.text)
-                if len(current_line) == 0 or re.fullmatch(pattern=r'\s+', string=current_line):
+                
+                if re.fullmatch(pattern=r'\s*', string=current_line):
                     # this line is empty or it is just whitespaces
                     self.idx = current_line_line_break
                     self.col += len(current_line)
