@@ -259,6 +259,15 @@ class Tokenizer:
                 self.checked_indent = True
                 current_line_line_break = self.idx
                 if self.text[self.idx] != '\n':
+                    # VERY IMPORTANT NOTICE
+                    # When we encounter a \n during tokenization, we consider this \n as the end of some line
+                    # namely, the all characters preceding this \n up to the nearest \n but exluding it
+                    # 
+                    # More clearly, when we encounter a line break (\n) called X
+                    # X is considered at the (END) of some line, after all this \n character is called (Line Break)
+                    # So we search backwards until we hit Y, which is file begin or another \n
+                    # so X's line is all characters between Y and X 
+                    # and of course exluding both X and Y because we don't want \n in line representation 
                     current_line_line_break = self.text.find('\n', self.idx)
                 if current_line_line_break == -1:
                     # this is last line
