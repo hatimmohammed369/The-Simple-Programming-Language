@@ -103,7 +103,7 @@ class Tokenizer:
             self.current_char = self.text[0]
         self.tokens_list: list[Token] = []
         self.identifiers_table: dict[str, list[Token]] = {}
-        self.indent_stack = [] # how many indents currently
+        self.indent_stack = [0] # how many indents currently
         self.dents_list: list[Token] = [] # stores indents and dedents
         self.checked_indent = False
         self.lines: dict[int, Line] = {}
@@ -299,10 +299,7 @@ class Tokenizer:
                         if error == '':
                             # this is not first line
                             # Dont add Indent/Dedent token only if current_level is not 0
-                            if self.indent_stack:
-                                indent_level = self.indent_stack[0]
-                            else:
-                                indent_level = 0
+                            indent_level = self.indent_stack[0]
 
                             begin = self.pos()
                             token = Token(value=captured_indent, pos_begin=begin)
