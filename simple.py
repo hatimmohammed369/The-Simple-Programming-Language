@@ -277,59 +277,60 @@ class Tokenizer:
                     captured_indent = self.text[self.idx:first_non_white_space]
                     captured_indent = captured_indent.replace('\t', ' ' * 4)
                     error = ''
+                    
+                    # Error Handling
                     if len(captured_indent) % 4 != 0:
                         # Syntax Error: Indentation must a multiple of 4
                         error += f'In line {self.ln + 1}, you have a Syntax Error: Indentation must be a multiple of 4\n'
                         error += current_line + '\n'
                         error += '^' * len(captured_indent) + f' Indent of {len(captured_indent)} spaces'
                     captured_indent_level = len(captured_indent) // 4
-                    if captured_indent_level in self.indent_stack and captured_indent_level != 0:
-                        if ' ' in captured_indent and '\t' in captured_indent:
-                            # Syntax Error: Mixing spaces and tabs in indentation
-                            error += f'Line {self.ln + 1}:\n'
+                    if ' ' in captured_indent and '\t' in captured_indent:
+                        # Syntax Error: Mixing spaces and tabs in indentation
+                        error += f'Line {self.ln + 1}:\n'
+                        error += current_line + '\n'
+                        error += '^' * len(captured_indent) + '\n'
+                        error += 'Syntax Error: Mixing spaces and tabs in indentation'
+                    if self.ln == 0 and len(captured_indent) != 0:
+                        # if it is first line, this is Syntax Error
+                        if len(error) == 0:
+                            error += 'Line 1:\n'
                             error += current_line + '\n'
                             error += '^' * len(captured_indent) + '\n'
-                            error += 'Syntax Error: Mixing spaces and tabs in indentation'
-                        if self.ln == 0 and len(captured_indent) != 0:
-                            # if it is first line, this is Syntax Error
-                            if len(error) == 0:
-                                error += 'Line 1:\n'
-                                error += current_line + '\n'
-                                error += '^' * len(captured_indent) + '\n'
-                            error += 'Syntax Error: Indenting first line'
-                        if error == '':
-                            # this is not first line
-                            # Dont add Indent/Dedent token only if captured_indent_level is not 0
-                            indent_level = self.indent_stack[0]
-
-                            begin = self.pos()
-                            token = Token(value=captured_indent, pos_begin=begin)
-                            token.pos_end = Pos(begin.idx+len(captured_indent), begin.col+len(captured_indent), self.ln)
-                            if captured_indent_level < indent_level:
-                                # DEDENT
-                                while self.indent_stack[0] != captured_indent_level:
-                                    self.indent_stack.pop()
-                                token.name = 'DEDENT'
-                            elif indent_level < captured_indent_level:
-                                # INDENT
-                                self.indent_stack.append(captured_indent_level)
-                                token.name = 'INDENT'
-                            else:
-                                # no indent or outdent, make token None
-                                token = None
-                            self.idx = first_non_white_space
-                            self.col = current_line.find(self.text[first_non_white_space])
-                            if self.idx < len(self.text):
-                                self.current_char = self.text[self.idx]
-                            else:
-                                self.current_char = ''
-                            if token is not None:
-                                # dont add indent/outdent token if it has no name, this means there's no indent or outdent
-                                self.tokens_list.append(token)
-                                self.dents_list.append(token)
-                        else:
-                            self.checked_indent = False
+                        error += 'Syntax Error: Indenting first line'
+                    # Error Handling Done!
+                    
+                    if error == '':
+                        # this is not first line
+                        # Dont add Indent/Dedent token only if captured_indent_level is not 0
+                        current_indent_level = self.indent_stack[0]
                         
+                        begin = self.pos()
+                        token = Token(value=captured_indent, pos_begin=begin)
+                        token.pos_end = Pos(begin.idx+len(captured_indent), begin.col+len(captured_indent), self.ln)
+                        if captured_indent_level < current_indent_level:
+                            # DEDENT
+                            while self.indent_stack[0] != captured_indent_level:
+                                self.indent_stack.pop()
+                            token.name = 'DEDENT'
+                        elif current_indent_level < captured_indent_level:
+                            # INDENT
+                            self.indent_stack.append(captured_indent_level)
+                            token.name = 'INDENT'
+                        else:
+                            # no indent or outdent, make token None
+                            token = None
+                        self.idx = first_non_white_space
+                        self.col = current_line.find(self.text[first_non_white_space])
+                        if self.idx < len(self.text):
+                            self.current_char = self.text[self.idx]
+                        else:
+                            self.current_char = ''
+                        if token is not None:
+                            # dont add indent/outdent token if it has no name, this means there's no indent or outdent
+                            self.tokens_list.append(token)
+                            self.dents_list.append(token)
+                    
                     if error == '':
                         error = None
             else:
