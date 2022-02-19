@@ -366,4 +366,3 @@ tokenizer = Tokenizer(source)
 for t in tokenizer:
     print(t)
 
-assert len(tokenizer.lines) == tokenizer.text.count('\n'), 'Lines are not detected correctly'
