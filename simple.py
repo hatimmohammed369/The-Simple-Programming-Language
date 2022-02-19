@@ -128,6 +128,9 @@ class Tokenizer:
                 end = self.idx
             else:
                 end = self.text.find('\n', self.idx+1)
+                if end == -1:
+                    # since we're using str.find, -1 is a possible output
+                    end = len(self.text)
             current_line = self.text[begin:end]
             self.lines[self.ln] = Line(current_line, begin, end)
         return current_line
