@@ -282,8 +282,8 @@ class Tokenizer:
                         error += f'In line {self.ln + 1}, you have a Syntax Error: Indentation must be a multiple of 4\n'
                         error += current_line + '\n'
                         error += '^' * len(captured_indent) + f' Indent of {len(captured_indent)} spaces'
-                    current_level = len(captured_indent) // 4
-                    if current_level in self.indent_stack:
+                    captured_indent_level = len(captured_indent) // 4
+                    if captured_indent_level in self.indent_stack and captured_indent_level != 0:
                         if ' ' in captured_indent and '\t' in captured_indent:
                             # Syntax Error: Mixing spaces and tabs in indentation
                             error += f'Line {self.ln + 1}:\n'
@@ -299,20 +299,20 @@ class Tokenizer:
                             error += 'Syntax Error: Indenting first line'
                         if error == '':
                             # this is not first line
-                            # Dont add Indent/Dedent token only if current_level is not 0
+                            # Dont add Indent/Dedent token only if captured_indent_level is not 0
                             indent_level = self.indent_stack[0]
 
                             begin = self.pos()
                             token = Token(value=captured_indent, pos_begin=begin)
                             token.pos_end = Pos(begin.idx+len(captured_indent), begin.col+len(captured_indent), self.ln)
-                            if current_level < indent_level:
+                            if captured_indent_level < indent_level:
                                 # DEDENT
-                                while self.indent_stack[0] != current_level:
+                                while self.indent_stack[0] != captured_indent_level:
                                     self.indent_stack.pop()
                                 token.name = 'DEDENT'
-                            elif indent_level < current_level:
+                            elif indent_level < captured_indent_level:
                                 # INDENT
-                                self.indent_stack.append(current_level)
+                                self.indent_stack.append(captured_indent_level)
                                 token.name = 'INDENT'
                             else:
                                 # no indent or outdent, make token None
