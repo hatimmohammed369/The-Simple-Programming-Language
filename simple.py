@@ -347,6 +347,18 @@ class Tokenizer:
                 break
 ####################################################################################################
 
+class Interpreter:
+    def init(self, tokenizer):
+        self.tokenizer = tokenizer
+
+    def exec(self):
+        for token in tokenizer:
+            if token.name == 'COMMENT':
+                pass
+        return
+
+####################################################################################################
+
 # run
 from sys import argv
 if len(argv) == 3 and argv[1].lower() == '-f':
