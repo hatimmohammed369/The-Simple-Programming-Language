@@ -119,9 +119,9 @@ class Tokenizer:
     def pos(self):
         return Pos(self.idx, self.col, self.ln)
 
-    def current_line(self) -> str:
+    def current_line(self) -> Line:
         try:
-            current_line = self.lines[self.ln].value
+            current_line = self.lines[self.ln]
         except KeyError:
             # we haven't yet added current line
             begin = self.last_line_break_index + 1
@@ -132,8 +132,7 @@ class Tokenizer:
                 if end == -1:
                     # since we're using str.find, -1 is a possible output
                     end = len(self.text)
-            current_line = self.text[begin:end]
-            self.lines[self.ln] = Line(current_line, begin, end)
+            current_line = self.lines[self.ln] = Line(self.text[begin:end], begin, end)
         return current_line
 
     def advance(self, steps):
@@ -251,20 +250,19 @@ class Tokenizer:
             token, error = None, None
             if self.col == 0 and not self.checked_indent:
                 # Check for indentation
-                current_line = self.current_line()
                 self.checked_indent = True
-                current_line_line_break = self.idx
-                if self.text[self.idx] != '\n':
-                    # VERY IMPORTANT NOTICE
-                    # When we encounter a \n during tokenization, we consider this \n as the end of some line
-                    # namely, the all characters preceding this \n up to the nearest \n but exluding it
-                    # 
-                    # More clearly, when we encounter a line break (\n) called X
-                    # X is considered at the (END) of some line, after all this \n character is called (Line Break)
-                    # So we search backwards until we hit Y, which is file begin or another \n
-                    # so X's line is all characters between Y and X
-                    # and of course exluding both X and Y because we don't want \n in line representation
-                    current_line_line_break = self.text.find('\n', self.idx)
+                current_line = self.current_line()
+                current_line = current_line.value
+                current_line_line_break = 0
+                # VERY IMPORTANT NOTICE
+                # When we encounter a \n during tokenization, we consider this \n as the end of some line
+                # namely, the all characters preceding this \n up to the nearest \n but exluding it
+                # 
+                # More clearly, when we encounter a line break (\n) called X
+                # X is considered at the (END) of some line, after all this \n character is called (Line Break)
+                # So we search backwards until we hit Y, which is file begin or another \n
+                # so X's line is all characters between Y and X
+                # and of course exluding both X and Y because we don't want \n in line representation
                 
                 if current_line_line_break == -1:
                     # this is last line
@@ -286,7 +284,7 @@ class Tokenizer:
                     if len(captured_indent) % 4 != 0:
                         # Syntax Error: Indentation must a multiple of 4
                         error += f'In line {self.ln + 1}, you have a Syntax Error: Indentation must be a multiple of 4\n'
-                        error += self.current_line() + '\n'
+                        error += current_line + '\n'
                         error += '^' * len(captured_indent) + f' Indent of {len(captured_indent)} spaces'
                     current_level = len(captured_indent) // 4
                     if current_level in self.indent_stack:
