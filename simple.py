@@ -320,7 +320,9 @@ class Tokenizer:
                             else:
                                 self.current_char = ''
                             self.tokens_list.append(token)
-                            self.dents_list.append(token)
+                            if token.name:
+                                # dont add indent/dedent token if it has no name, this means there's no indent or dedent
+                                self.dents_list.append(token)
                         else:
                             self.checked_indent = False
                         
