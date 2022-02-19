@@ -251,24 +251,21 @@ class Tokenizer:
             if self.col == 0 and not self.checked_indent:
                 # Check for indentation
                 self.checked_indent = True
-                current_line = self.current_line()
-                current_line = current_line.value
-                current_line_line_break = 0
+                current_line_object = self.current_line()
+                current_line = current_line_object.value
+                current_line_line_break = current_line_object.end
                 # VERY IMPORTANT NOTICE
                 # When we encounter a \n during tokenization, we consider this \n as the end of some line
-                # namely, the all characters preceding this \n up to the nearest \n but exluding it
+                # namely, the all characters preceding this \n up to the nearest \n but excluding it
                 # 
                 # More clearly, when we encounter a line break (\n) called X
                 # X is considered at the (END) of some line, after all this \n character is called (Line Break)
                 # So we search backwards until we hit Y, which is file begin or another \n
                 # so X's line is all characters between Y and X
-                # and of course exluding both X and Y because we don't want \n in line representation
+                # and of course excluding both X and Y because we don't want \n in line representation
                 
-                if current_line_line_break == -1:
-                    # this is last line
-                    current_line_line_break = len(self.text)
-                
-                if re.fullmatch(pattern=r'\s*', string=current_line):
+                first_non_white_space = re.compile(r'[^\s]').search(string=self.text, pos=self.idx, endpos=current_line_line_break)
+                if first_non_white_space is None:
                     # this line is empty or it is just whitespaces
                     self.idx = current_line_line_break
                     self.col += len(current_line)
@@ -276,7 +273,6 @@ class Tokenizer:
                     continue
                 else:
                     # this line contains some non-whitespaces
-                    first_non_white_space = re.compile(r'[^\s]').search(self.text, pos=self.idx, endpos=current_line_line_break)
                     first_non_white_space = first_non_white_space.start()
                     captured_indent = self.text[self.idx:first_non_white_space]
                     captured_indent = captured_indent.replace('\t', ' ' * 4)
@@ -333,11 +329,6 @@ class Tokenizer:
                                 self.dents_list.append(token)
                         else:
                             self.checked_indent = False
-                    else:
-                        # this indent/outdent does not belong to any existing block, so this is a Syntax Error
-                        error += current_line + '\n'
-                        error += ( '^' * (first_non_white_space - self.lines[self.ln]) )
-                        error += 'Syntax Error: this indent/outdent does not belong to any existing block'
                         
                     if error == '':
                         error = None
