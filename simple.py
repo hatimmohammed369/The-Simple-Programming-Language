@@ -266,8 +266,8 @@ class Tokenizer:
                     # More clearly, when we encounter a line break (\n) called X
                     # X is considered at the (END) of some line, after all this \n character is called (Line Break)
                     # So we search backwards until we hit Y, which is file begin or another \n
-                    # so X's line is all characters between Y and X 
-                    # and of course exluding both X and Y because we don't want \n in line representation 
+                    # so X's line is all characters between Y and X
+                    # and of course exluding both X and Y because we don't want \n in line representation
                     current_line_line_break = self.text.find('\n', self.idx)
                 
                 if current_line_line_break == -1:
@@ -341,7 +341,9 @@ class Tokenizer:
                             self.checked_indent = False
                     else:
                         # this indent/outdent does not belong to any existing block, so this is a Syntax Error
-                        pass
+                        error += current_line + '\n'
+                        error += ( '^' * (first_non_white_space - self.lines[self.ln]) )
+                        error += 'Syntax Error: this indent/outdent does not belong to any existing block'
                         
                     if error == '':
                         error = None
