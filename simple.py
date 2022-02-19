@@ -225,16 +225,6 @@ class Tokenizer:
                 else:
                     # Things like +, -, /, *, any thing single character
                     token.value = self.text[self.idx:self.idx+1]
-                    if self.tokens_list[-1].name == 'CONST_NAME' and token.value == '=':
-                        # Constant re-assignment, illegal
-                        error = f'Line {self.ln + 1}:\n'
-                        error += 'Constant re-assignment error:\n' + self.current_line() + '\n' + (' ' * self.col)
-                        const_name_token = self.tokens_list[-1]
-                        error += '^\n' + (' ' * self.col) + f'Constant ({const_name_token.value}) re-assignment\n'
-                        const_declaration_line = self.identifiers_table[const_name_token.value][0].pos_begin.ln
-                        error += f'Defined here, line {const_declaration_line + 1}:\n'
-                        error += self.lines[const_declaration_line].value
-                        return None, error
                 
                 token.name = punctuation_dict[token.value]
                 token.pos_end = Pos(begin.idx+len(token.value), begin.col+len(token.value), self.ln)
