@@ -23,12 +23,12 @@ class Pos:
 class Token:
     name: str = ''
     value: Any = object()
-    pos_begin: Pos = Pos()
-    pos_end: Pos = Pos()
+    begin: Pos = Pos()
+    end: Pos = Pos()
     def __repr__(self):
-        begin = self.pos_begin.ln, self.pos_begin.col
-        end = self.pos_end.ln, self.pos_end.col
-        return f'Token({self.name}, {repr(self.value)}, {(begin)}-{end})'
+        begin = self.begin.ln, self.begin.col
+        end = self.end.ln, self.end.col
+        return f'Token({self.name}, {repr(self.value)}, {begin}-{end})'
     __str__ = __repr__
 
 data_types = ('int', 'float', 'string', 'boolean', 'array', 'null')
@@ -155,8 +155,8 @@ class Tokenizer:
         if self.current_char != '': # it is not EOF
             if self.current_char == '\n':
                 # NEWLINE
-                token = Token(name='NEWLINE', value='\n', pos_begin=self.pos())
-                token.pos_end = Pos(token.pos_begin.idx+1, token.pos_begin.col+1, self.ln)
+                token = Token(name='NEWLINE', value='\n', begin=self.pos())
+                token.end = Pos(token.begin.idx+1, token.begin.col+1, self.ln)
                 steps = 1
 
             # self.current_char == '#' 
@@ -164,14 +164,14 @@ class Tokenizer:
                 # COMMENT
                 next_new_line = self.text.find('\n', self.idx) # NEWLINE is the only thing that stops a comment
                 token = Token(name='COMMENT')
-                token.pos_begin = self.pos()
+                token.begin = self.pos()
                 if next_new_line != -1:
                     # this comment is not in last line
                     token.value = self.text[self.idx:next_new_line]
                 else:
                     # this comment is in last line
                     token.value = self.text[self.idx:]
-                token.pos_end = Pos(token.pos_begin.idx+len(token.value), token.pos_begin.col+len(token.value), self.ln)
+                token.end = Pos(token.begin.idx+len(token.value), token.begin.col+len(token.value), self.ln)
                 steps = len(token.value)
 
             elif string := string_pattern.match(string=self.text, pos=self.idx):
@@ -183,8 +183,8 @@ class Tokenizer:
                     token.name = "END_LABEL"
                 else:
                     token.name = 'F-STRING' if match_value[0] == 'f' else 'STRING'
-                token.pos_begin = begin = self.pos()
-                token.pos_end = Pos(begin.idx+len(token.value), begin.col+len(token.value), begin.ln)
+                token.begin = begin = self.pos()
+                token.end = Pos(begin.idx+len(token.value), begin.col+len(token.value), begin.ln)
                 steps = len(token.value)
 
             elif name := name_pattern.match(string=self.text, pos=self.idx):
@@ -192,9 +192,9 @@ class Tokenizer:
                 # an identifier or a keyword
                 current_identifier = name.group()
                 token = Token()
-                token.pos_begin = begin = self.pos()
+                token.begin = begin = self.pos()
                 token.value = current_identifier
-                token.pos_end = Pos(begin.idx+len(token.value), begin.idx+len(token.value), self.ln)
+                token.end = Pos(begin.idx+len(token.value), begin.idx+len(token.value), self.ln)
                 
                 if token.value in language_words:
                     token.name = 'KEYWORD'
@@ -212,7 +212,7 @@ class Tokenizer:
             elif self.current_char in punctuation:
                 # SOMETHING LIKE *, +, {, %, ;, .....
                 begin = self.pos()
-                token = Token(pos_begin=begin)
+                token = Token(begin=begin)
                 if self.idx + 1 < len(self.text) and self.text[self.idx + 1] in followers:
                     # Things like :=, ==, !=, <=, <<
                     token.value = self.text[self.idx:self.idx+2]
@@ -221,22 +221,22 @@ class Tokenizer:
                     token.value = self.text[self.idx:self.idx+1]
                 
                 token.name = punctuation_dict[token.value]
-                token.pos_end = Pos(begin.idx+len(token.value), begin.col+len(token.value), self.ln)
+                token.end = Pos(begin.idx+len(token.value), begin.col+len(token.value), self.ln)
                 steps = len(token.value)
 
             elif number_match := number_pattern.match(string=self.text, pos=self.idx):
                 # A NUMBER
                 match_value = number_match.group()
                 begin =   self.pos()
-                token =   Token(name='NUMBER', pos_begin=begin)
+                token =   Token(name='NUMBER', begin=begin)
                 if int_pattern.match(string=match_value):
                     # int
                     token.value = int(match_value)
                 else:
                     # float
                     token.value = float(match_value)
-                end=Pos(token.pos_begin.idx+len(str(token.value)), token.pos_begin.col+len(str(token.value)), self.ln)
-                token.pos_end = end
+                end=Pos(token.begin.idx+len(str(token.value)), token.begin.col+len(str(token.value)), self.ln)
+                token.end = end
                 steps = len(str(token.value)) # since token.value is a number, type-casted in lines 267=>272
         self.advance(steps)
         if token is not None:
@@ -305,8 +305,8 @@ class Tokenizer:
                         current_indent_level = self.indent_stack[-1]
                         
                         begin = self.pos()
-                        token = Token(value=captured_indent, pos_begin=begin)
-                        token.pos_end = Pos(begin.idx+len(captured_indent), begin.col+len(captured_indent), self.ln)
+                        token = Token(value=captured_indent, begin=begin)
+                        token.end = Pos(begin.idx+len(captured_indent), begin.col+len(captured_indent), self.ln)
                         if captured_indent_level < current_indent_level:
                             # OUTDENT
                             self.indent_stack.pop(-1)
