@@ -26,9 +26,9 @@ class Token:
     begin: Pos = Pos()
     end: Pos = Pos()
     def __repr__(self):
-        begin = self.begin.ln, self.begin.col
-        end = self.end.ln, self.end.col
-        return f'Token({self.name}, {repr(self.value)}, {begin}-{end})'
+        self_idx = f'{self.begin.idx}-{self.end.idx}'
+        self_col = f'{self.begin.col}-{self.end.col}'
+        return f'Token({self.name}, {repr(self.value)}, ({self_idx}, {self_col}, {self.begin.ln}))'
     __str__ = __repr__
 
 data_types = ('int', 'float', 'string', 'boolean', 'array', 'null')
