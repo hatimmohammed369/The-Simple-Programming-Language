@@ -15,9 +15,9 @@ class Line:
 
 @dataclass(init=True, eq=True, repr=True)
 class Pos:
-    idx: int = -1
-    col: int = -1
-    ln: int = -1
+    idx: int = 0
+    col: int = 0
+    ln: int = 0
 
 @dataclass(init=True, repr=True, eq=True)
 class Token:
@@ -69,9 +69,9 @@ punctuation_dict = \
    '/'  : 'SLASH',
    '//' : 'DOUBLE_SLASH',
    '%'  : 'PERCENT',
-   '~'  : 'TILDE',
+   '~'  : 'NOT',
    '&'  : 'AND',
-   '|'  : 'PIPE',
+   '|'  : 'OR',
    '>>' : 'RIGHT_SHIFT',
    '<<' : 'LEFT_SHIFT',
    '<'  : 'LESS',
@@ -107,7 +107,7 @@ class Tokenizer:
         self.indent_stack = [0] # how many indents currently
         self.checked_indent = False
         self.lines: dict[int, Line] = {}
-        self.last_line_break_index = 0
+        self.last_line_break_index = -1
 
     def __len__(self):
         return len(self.tokens_list)
