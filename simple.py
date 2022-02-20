@@ -342,6 +342,11 @@ class Tokenizer:
             if self.current_char == '':
                 # DONE!
                 break
+    
+    def tokenize(self):
+        while self.current_char != '':
+            self.next_token()
+        return self
 ####################################################################################################
 
 class Interpreter:
