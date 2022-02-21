@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3.10
 
 import re
-from typing import Any
+from typing import Any, Union
 from dataclasses import dataclass
 
 ####################################################################################################
@@ -205,7 +205,7 @@ class Tokenizer:
             self.col += steps
         return self
 
-    def next_token(self) -> tuple[Token | None, str | None]:
+    def next_token(self) -> Union[Token, None]:
         token = None
         steps = 1
         if self.current_char != "":  # it is not EOF
@@ -319,7 +319,7 @@ class Tokenizer:
         if token is not None:
             # we have a valid token
             self.tokens_list.append(token)
-        return token, None
+        return token
 
     def __iter__(self):
         while True:
