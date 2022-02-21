@@ -171,12 +171,6 @@ class Tokenizer:
         self.lines: dict[int, Line] = {}
         self.last_line_break_index = -1
 
-    def __len__(self):
-        return len(self.tokens_list)
-
-    def __getitem__(self, key) -> Token:
-        return self.tokens_list[key]
-
     def pos(self):
         return Pos(self.idx, self.col, self.ln)
 
