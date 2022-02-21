@@ -170,6 +170,7 @@ class Tokenizer:
         self.checked_indent = False
         self.lines: dict[int, Line] = {}
         self.last_line_break_index = -1
+        self.tokenized = False # becomes True after this instance calls method tokenize()
 
     def pos(self):
         return Pos(self.idx, self.col, self.ln)
@@ -321,8 +322,8 @@ class Tokenizer:
             self.tokens_list.append(token)
         return token
 
-    def __iter__(self):
-        while True:
+    def tokenize(self):
+        while self.current_char != "":
             token, error = None, None
             if self.col == 0 and not self.checked_indent:
                 # Check for indentation
@@ -417,22 +418,21 @@ class Tokenizer:
                     if error == "":
                         error = None
             else:
-                token = self.next_token()
+                self.next_token()
             #
             #
             if error is not None:
                 print("\nError:\n" + error)
                 exit(0)
-            if token is not None:
-                yield token
-            if self.current_char == "":
-                # DONE!
-                break
-
-    def tokenize(self):
-        while self.current_char != "":
-            self.next_token()
+        # end "while self.current_char != "" "
+        self.tokenized = True
         return self
+
+
+    def __iter__(self):
+        if self.tokenized is False:
+            self.tokenize()
+        return iter(self.tokens_list)
 
 
 ####################################################################################################
