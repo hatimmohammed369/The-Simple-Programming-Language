@@ -23,6 +23,11 @@ else:
 
 class TestLinesDict(TestCase):
     def test_lines_dict(self):
+        print('Source preview:')
+        with open('/tmp/for_cat', 'w') as tmp:
+            tmp.write(source)
+        from os import system
+        system('cat /tmp/for_cat -n')
         str_split = set(source.split('\n')[:-1])
         lines = set([ln.value for ln in Tokenizer(source).tokenize().lines.values()])
         print(f'{str_split = }\n{lines = }')
