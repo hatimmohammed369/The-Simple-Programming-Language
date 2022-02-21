@@ -417,7 +417,7 @@ class Tokenizer:
                     if error == "":
                         error = None
             else:
-                token, error = self.next_token()
+                token = self.next_token()
             #
             #
             if error is not None:
