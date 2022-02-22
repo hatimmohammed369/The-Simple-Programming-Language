@@ -30,7 +30,7 @@ class TestLinesDict(TestCase):
         from os import system
 
         system("cat /tmp/for_cat -n")
-        str_split = set(source.split("\n")[:-1])
+        str_split = set(source.splitlines())
         lines = set([ln.value for ln in Tokenizer(source).tokenize().lines.values()])
         self.assertEqual(
             str_split,
