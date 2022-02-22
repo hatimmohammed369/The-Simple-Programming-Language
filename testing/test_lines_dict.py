@@ -21,16 +21,23 @@ if args.file:
 else:
     source = args.source
 
+
 class TestLinesDict(TestCase):
     def test_lines_dict(self):
-        print('Source preview:')
-        with open('/tmp/for_cat', 'w') as tmp:
+        print("Source preview:")
+        with open("/tmp/for_cat", "w") as tmp:
             tmp.write(source)
         from os import system
-        system('cat /tmp/for_cat -n')
-        str_split = set(source.split('\n')[:-1])
+
+        system("cat /tmp/for_cat -n")
+        str_split = set(source.split("\n")[:-1])
         lines = set([ln.value for ln in Tokenizer(source).tokenize().lines.values()])
-        print(f'{str_split = }\n{lines = }')
-        self.assertEqual(0,0)
+        self.assertEqual(
+            str_split,
+            lines,
+            f"Some elements are rebellious: \n{str_split - lines = }\n{lines - str_split = }",
+        )
+
+
 if __name__ == "__main__":
     TextTestRunner().run(TestLoader().loadTestsFromTestCase(TestLinesDict))
