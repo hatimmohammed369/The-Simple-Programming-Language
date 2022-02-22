@@ -47,15 +47,16 @@ class TestTokensList(TestCase):
 
         # now test using lines
         for token in tokens_list:
-            ln, col_begin, col_end = token.begin.ln, token.end.col, token.end.col
-            self.assertEqual(
-                str(
-                    token.value
-                ),  # because when Token represents a number, token.value is also
-                lines[ln].value[col_begin:col_end],
-                f"Something wrong will col attributes"
-                + f"\n{token = }\n{lines[ln] = }\n{lines[ln].value[col_begin:col_end] = }\n",
-            )
+            if token.value != "\n":
+                ln, col_begin, col_end = token.begin.ln, token.end.col, token.end.col
+                self.assertEqual(
+                    str(
+                        token.value
+                    ),  # because when Token represents a number, token.value is also
+                    lines[ln].value[col_begin:col_end],
+                    f"Something wrong will col attributes"
+                    + f"\n{token = }\n{lines[ln] = }\n{lines[ln].value[col_begin:col_end] = }\n",
+                )
 
 
 if __name__ == "__main__":
