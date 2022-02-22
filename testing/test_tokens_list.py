@@ -30,7 +30,9 @@ class TestTokensList(TestCase):
         from os import system
 
         system("cat /tmp/for_cat -n")
-        tokens_list = Tokenizer(source).tokenize().tokens_list
+        tokenizer = Tokenizer(source).tokenize()
+        tokens_list, lines = tokenizer.tokens_list, tokenizer.lines
+        print(f"Tokens list:\n{tokens_list}")
         for token in tokens_list:
             # First test if token pos attribute is correct
             # Use idx for now
@@ -42,7 +44,18 @@ class TestTokensList(TestCase):
                 source[begin.idx : end.idx],
                 "Token {token} has idx position incorrectly recored\n{begin.idx = }\n{end.idx = }",
             )
-            pass
+
+        # now test using lines
+        for token in tokens_list:
+            ln, col_begin, col_end = token.begin.ln, token.end.col, token.end.col
+            self.assertEqual(
+                str(
+                    token.value
+                ),  # because when Token represents a number, token.value is also
+                lines[ln].value[col_begin:col_end],
+                f"Something wrong will col attributes"
+                + f"\n{token = }\n{lines[ln] = }\n{lines[ln].value[col_begin:col_end] = }\n",
+            )
 
 
 if __name__ == "__main__":
