@@ -170,7 +170,9 @@ class Tokenizer:
         self.checked_indent = False
         self.lines: dict[int, Line] = {}
         self.last_line_break_index = -1
-        self.tokenized = False # becomes True after this instance calls method tokenize()
+        self.tokenized = (
+            False  # becomes True after this instance calls method tokenize()
+        )
 
     def pos(self):
         return Pos(self.idx, self.col, self.ln)
@@ -260,7 +262,7 @@ class Tokenizer:
                 token.begin = begin = self.pos()
                 token.value = current_identifier
                 token.end = Pos(
-                    begin.idx + len(token.value), begin.idx + len(token.value), self.ln
+                    begin.idx + len(token.value), begin.col + len(token.value), self.ln
                 )
 
                 if token.value in language_words:
@@ -427,7 +429,6 @@ class Tokenizer:
         # end "while self.current_char != "" "
         self.tokenized = True
         return self
-
 
     def __iter__(self):
         if self.tokenized is False:
