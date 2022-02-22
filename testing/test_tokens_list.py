@@ -32,7 +32,6 @@ class TestTokensList(TestCase):
         system("cat /tmp/for_cat -n")
         tokenizer = Tokenizer(source).tokenize()
         tokens_list, lines = tokenizer.tokens_list, tokenizer.lines
-        print(f"Tokens list:\n{tokens_list}")
         for token in tokens_list:
             # First test if token pos attribute is correct
             # Use idx for now
@@ -48,14 +47,19 @@ class TestTokensList(TestCase):
         # now test using lines
         for token in tokens_list:
             if token.value != "\n":
-                ln, col_begin, col_end = token.begin.ln, token.end.col, token.end.col
+                ln, col_begin, col_end = token.begin.ln, token.begin.col, token.end.col
                 self.assertEqual(
                     str(
                         token.value
                     ),  # because when Token represents a number, token.value is also
                     lines[ln].value[col_begin:col_end],
-                    f"Something wrong will col attributes"
-                    + f"\n{token = }\n{lines[ln] = }\n{lines[ln].value[col_begin:col_end] = }\n",
+                    "Something wrong will col attributes:\n"
+                    + f"{token = }\n"
+                    + f"{ln = }\n"
+                    + f"lines[{ln}] = {lines[ln]}\n"
+                    + f"(begin={col_begin}, end={col_end})\n"
+                    + f"{token.value = }\n"
+                    + f"lines[{ln}].value[{col_begin}:{col_end}] = {lines[ln].value[col_begin:col_end]}\n",
                 )
 
 
