@@ -189,7 +189,7 @@ SEPARATOR_PATTERN = re.compile(
     r"==|"
     r"!=|"
     r"->|"
-    r"=>|"
+    r"=>"
 )
 
 
