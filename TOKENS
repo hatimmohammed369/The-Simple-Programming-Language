@@ -43,4 +43,5 @@ LESSEQUAL               '<='
 GREATEREQUAL            '>='
 
 PLUSEQUAL               '+='
-RETURN_ARROW            '=>'
+RETURN_ARROW            '->'
+FUNCTION_ARROW          '=>'

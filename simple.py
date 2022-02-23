@@ -36,9 +36,9 @@ class Token:
     __str__ = __repr__
 
 
-data_types = ("int", "float", "string", "boolean", "array", "null")
+DATA_TYPES = ("int", "float", "string", "boolean", "array", "null")
 
-language_words = (
+KEYWORDS = (
     "const",
     "int",
     "float",
@@ -69,9 +69,9 @@ language_words = (
     "returns",
 )
 
-block_statements = ("if", "foreach", "while", "match", "function")
+BLOCK_STATEMENTS = ("if", "foreach", "while", "match", "function")
 
-punctuation = (
+SEPARATORS = (
     ";",
     ":",
     ",",
@@ -94,21 +94,23 @@ punctuation = (
     "%",
     "++",
     "--",
+    "+=",
     "~",
     "&",
     "|",
-    ">>",
     "<<",
+    ">>",
     "<",
     "<=",
     ">",
     ">=",
     "==",
     "!=",
-    "+=",
+    "->",
+    "=>",
 )
 
-punctuation_dict = {
+SEPARATORS_DICT = {
     ";": "SEMICOLON",
     ":": "COLON",
     ",": "COMMA",
@@ -120,7 +122,6 @@ punctuation_dict = {
     ")": "RIGHT_PARENTHESES",
     ":=": "COLON_EQUAL",
     "=": "EQUAL",
-    "=>": "RETURN_ARROW",
     "+": "PLUS",
     "-": "MINUS",
     "*": "STAR",
@@ -128,6 +129,9 @@ punctuation_dict = {
     "/": "SLASH",
     "//": "DOUBLE_SLASH",
     "%": "PERCENT",
+    "+=": "PLUS_EQUAL",
+    "++": "PLUS_PLUS",
+    "--": "MINUS_MINUS",
     "~": "NOT",
     "&": "AND",
     "|": "OR",
@@ -139,22 +143,54 @@ punctuation_dict = {
     ">=": "GREATER_EQUAL",
     "==": "EQUAL_EQUAL",
     "!=": "NOT_EQUAL",
-    "+=": "PLUS_EQUAL",
-    "++": "PLUS_PLUS",
-    "--": "MINUS_MINUS",
     "->": "RETURN_TYPE_ARROW",
+    "=>": "FUNCTION_ARROW",
 }
 
-followers = ("=", ">", "<", "+", "*", "-")
+FOLLOWERS = ("=", ">", "<", "+", "*", "-")
 
-int_pattern = re.compile(r"[+-]{0,1}\d+([eE][+-]{0,1}\d+){0,1}")
-float_pattern = re.compile(
+INT_PATTERN = re.compile(r"[+-]{0,1}\d+([eE][+-]{0,1}\d+){0,1}")
+FLOAT_PATTERN = re.compile(
     r"[+-]{0,1}\d+[.]\d*([eE][+-]{0,1}\d+){0,1}|[+-]{0,1}\d*[.]\d+([eE][+-]{0,1}\d+){0,1}"
 )
-number_pattern = re.compile(float_pattern.pattern + "|" + int_pattern.pattern)
-string_pattern = re.compile(r'f{0,1}".*?(?<!\\)"')
-indent_pattern = re.compile(r"[ ]{4}|[\t]")  # 4 consecutive spaces or a single tab
-name_pattern = re.compile(r"[_a-zA-Z][_a-zA-Z0-9]*")
+NUMBER_PATTERN = re.compile(FLOAT_PATTERN.pattern + "|" + INT_PATTERN.pattern)
+STRING_PATTERN = re.compile(r'f{0,1}".*?(?<!\\)"')
+INDENT_PATTERN = re.compile(r"[ ]{4}|[\t]")  # 4 consecutive spaces or a single tab
+NAME_PATTERN = re.compile(r"[_a-zA-Z][_a-zA-Z0-9]*")
+SEPARATOR_PATTERN = re.compile(
+    r";|"
+    r":|"
+    r",|"
+    r"\[|"
+    r"]|"
+    r"{|"
+    r"}|"
+    r"\(|"
+    r"\)|"
+    r":=|"
+    r"=|"
+    r"->|"
+    r"-|"
+    r"\*{1,2}|"
+    r"/{1,2}|"
+    r"%|"
+    r"\+{1,2}|"
+    r"--|"
+    r"\+=|"
+    r"~|"
+    r"&|"
+    r"[|]|"
+    r"<<|"
+    r">>|"
+    r"<|"
+    r"<=|"
+    r">|"
+    r">=|"
+    r"==|"
+    r"!=|"
+    r"->|"
+    r"=>|"
+)
 
 
 class Tokenizer:
@@ -239,7 +275,7 @@ class Tokenizer:
                 )
                 steps = len(token.value)
 
-            elif string := string_pattern.match(string=self.text, pos=self.idx):
+            elif string := STRING_PATTERN.match(string=self.text, pos=self.idx):
                 # STRING
                 match_value = string.group()
                 token = Token(value=match_value)
@@ -254,7 +290,7 @@ class Tokenizer:
                 )
                 steps = len(token.value)
 
-            elif name := name_pattern.match(string=self.text, pos=self.idx):
+            elif name := NAME_PATTERN.match(string=self.text, pos=self.idx):
                 # IDENTIFIER
                 # an identifier or a keyword
                 current_identifier = name.group()
@@ -265,7 +301,7 @@ class Tokenizer:
                     begin.idx + len(token.value), begin.col + len(token.value), self.ln
                 )
 
-                if token.value in language_words:
+                if token.value in KEYWORDS:
                     token.name = "KEYWORD"
                 else:
                     if current_identifier in self.identifiers_table:
@@ -278,32 +314,24 @@ class Tokenizer:
                         self.identifiers_table[token.value] = [token]
                 steps = len(token.value)
 
-            elif self.current_char in punctuation:
+            elif sep := SEPARATOR_PATTERN.match(string=self.text, pos=self.idx):
                 # SOMETHING LIKE *, +, {, %, ;, .....
                 begin = self.pos()
                 token = Token(begin=begin)
-                if (
-                    self.idx + 1 < len(self.text)
-                    and self.text[self.idx + 1] in followers
-                ):
-                    # Things like :=, ==, !=, <=, <<
-                    token.value = self.text[self.idx : self.idx + 2]
-                else:
-                    # Things like +, -, /, *, any thing single character
-                    token.value = self.text[self.idx : self.idx + 1]
+                token.value = sep.group()
 
-                token.name = punctuation_dict[token.value]
+                token.name = SEPARATORS_DICT[token.value]
                 token.end = Pos(
                     begin.idx + len(token.value), begin.col + len(token.value), self.ln
                 )
                 steps = len(token.value)
 
-            elif number_match := number_pattern.match(string=self.text, pos=self.idx):
+            elif number_match := NUMBER_PATTERN.match(string=self.text, pos=self.idx):
                 # A NUMBER
                 match_value = number_match.group()
                 begin = self.pos()
                 token = Token(name="NUMBER", begin=begin)
-                if int_pattern.match(string=match_value):
+                if INT_PATTERN.match(string=match_value):
                     # int
                     token.value = int(match_value)
                 else:
