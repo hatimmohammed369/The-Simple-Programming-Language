@@ -14,6 +14,7 @@ KEYWORDS = (
     "boolean",
     "mod",
     "is",
+    "in",
     "IS",
     "not",
     "and",
@@ -24,6 +25,7 @@ KEYWORDS = (
     "do",
     "then",
     "while",
+    "loop",
     "foreach",
     "match",
     "case",
@@ -33,7 +35,7 @@ KEYWORDS = (
     "returns",
 )
 
-BLOCK_STATEMENTS = ("if", "foreach", "while", "match", "function")
+BLOCK_STATEMENTS = ("if", "foreach", "while", "loop", "match", "function")
 
 SEPARATORS = (
     ";",
