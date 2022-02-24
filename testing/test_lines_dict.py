@@ -4,7 +4,7 @@ from sys import path
 
 path.append("/home/hatim/Desktop/The-Simple-Programming-Language")
 
-from simple import Tokenizer
+from tokenizer import Tokenizer
 
 from argparse import ArgumentParser
 
