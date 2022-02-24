@@ -44,6 +44,6 @@ CONST_VAR_DECLARATION: [ 'const' ] TYPE [ '&' ] NAME [ ':=' EXPRESSION] [';']
 CONST_VAR_EXPRESSION: [ 'const' ] TYPE [ '&' ] NAME '=' EXPRESSION
 
 FUNCTION_DECLARATION: 'function' NAME [ '(' CONST_VAR_EXPRESSION [ ( ';' | ',' ) | CONST_VAR_EXPRESSION ] * ')' ]
-    [ '->' TYPE ] [ '=>' ] [ '{'] BLOCK ['}' ]
+    [ '->' TYPE ] [ '=>' ] [ '{' ] BLOCK [ '}' ]
 
 BLOCK: INDENT STATEMENT+ OUTDENT
