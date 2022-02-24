@@ -466,20 +466,6 @@ class Tokenizer:
 
 ####################################################################################################
 
-
-class Interpreter:
-    def init(self, tokenizer):
-        self.tokenizer = tokenizer
-
-    def exec(self):
-        for token in tokenizer:
-            if token.name == "COMMENT":
-                pass
-        return
-
-
-####################################################################################################
-
 if __name__ == "__main__":
     from argparse import ArgumentParser
 
