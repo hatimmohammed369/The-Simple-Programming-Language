@@ -8,11 +8,14 @@ OPERATOR_STATEMENT: EXPRESSION [OPERATOR EXPRESSION]
 
 OPERATOR: ARITHMETIC_OPERATOR | LOGICAL_OPERATOR
 
-LOGICAL_OPERATOR: 'not' | 'and' | 'or' | '>' | '>=' | '<' | '<='
+LOGICAL_OPERATOR: 'not' | 'and' | 'or' | EQUAL_EQUAL_OPERATOR |'!=' | '>' | '>=' | '<' | '<=' | IDENTITY_OPERATOR
+
+EQUAL_EQUAL_OPERATOR: '==' | 'is'
+
+IDENTITY_OPERATOR: 'IS'
 
 ARITHMETIC_OPERATOR: MATH_OPERATOR | BITWISE_OPERATOR
 
 MATH_OPERATOR: '+' | '++' | '+=' | '-' | '*' | '**' | '/' | '//'
-
 
 BITWISE_OPERATOR: '~' | '&' | "|" | '>>' | '<<'
