@@ -19,7 +19,7 @@ ARITHMETIC_OPERATOR: MATH_OPERATOR | BITWISE_OPERATOR
 
 MATH_OPERATOR: '+' | '++' | '+=' | '-' | '*' | '**' | '/' | '//'
 
-BITWISE_OPERATOR: '~' | '&' | "|" | '>>' | '<<'
+BITWISE_OPERATOR: '~' | '&' | '|' | '>>' | '<<'
 
 EXPRESSION: LITERAL | NAME | FUNCTION_CALL
 
@@ -33,4 +33,6 @@ ARGUMENT: [ NAME [ ':' TYPE ] '=' ] EXPRESSION
 
 TYPE: USER_DEFINED_TYPE_NAME | PRIMITIVE_DATA_TYPE_NAME
 
-PRIMITIVE_DATA_TYPE_NAME: "int" | "float" | "string" | "boolean" | "array" | "null"
+PRIMITIVE_DATA_TYPE_NAME: 'int' | 'float' | 'string' | 'boolean' | ARRAY_TYPE | 'null'
+
+ARRAY_TYPE: 'array' [ '[' POSITIVE_INTEGER TYPE ']' ]
