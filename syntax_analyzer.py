@@ -1,4 +1,8 @@
 #!/usr/local/bin/python3.10
+
+# File syntax_analyzer.py
+# Perform syntax analysis, in other words, check if given source code is syntactically correct 
+
 if __name__ == "__main__":
     from argparse import ArgumentParser
     from tokenizer import Tokenizer

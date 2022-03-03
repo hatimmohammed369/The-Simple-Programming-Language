@@ -1,5 +1,9 @@
 #!/usr/local/bin/python3.10
 
+# File tokenizer.py
+# Tokenizer file
+# Takes a stream of characters turning them into tokens (words)
+
 import re
 from typing import Any, Union
 from dataclasses import dataclass

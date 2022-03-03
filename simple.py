@@ -1,4 +1,9 @@
 #!/usr/local/bin/python3.10
+
+# File simple.py
+# Intrepreter main file
+# Intrepreter entry point
+
 if __name__ == "__main__":
     from argparse import ArgumentParser
     from tokenizer import Tokenizer
