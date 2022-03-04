@@ -54,9 +54,7 @@ class Tokenizer:
         self.checked_indent = False
         self.lines: dict[int, Line] = {}
         self.last_line_break_index = -1
-        self.tokenized = (
-            False  # becomes True after this instance calls method tokenize()
-        )
+        self.done = False  # becomes True after this instance calls method tokenize()
 
     def pos(self):
         return Pos(self.idx, self.col, self.ln)
@@ -303,10 +301,10 @@ class Tokenizer:
                 print("\nError:\n" + error)
                 exit(0)
         # end "while self.current_char != "" "
-        self.tokenized = True
+        self.done = True
         return self
 
     def __iter__(self):
-        if self.tokenized is False:
+        if self.done is False:
             self.tokenize()
         return iter(self.tokens_list)
