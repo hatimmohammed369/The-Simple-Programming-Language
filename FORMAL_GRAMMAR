@@ -1,3 +1,35 @@
+KEYWORD:
+    'IS'       |
+    'and'      |
+    'array'    |
+    'boolean'  |
+    'break'    |
+    'case'     |
+    'const'    |
+    'continue' |
+    'do'       |
+    'end'      |
+    'false'    |
+    'float'    |
+    'foreach'  |
+    'function' |
+    'if'       |
+    'in'       |
+    'int'      |
+    'is'       |
+    'loop'     |
+    'match'    |
+    'mod'      |
+    'not'      |
+    'null'     |
+    'or'       |
+    'return'   |
+    'returns'  |
+    'string'   |
+    'then'     |
+    'true'     |
+    'while'
+
 STATEMENT: ( SMALL_STATEMENT | BLOCK_STATEMENT ) [ [';'] LINE_BREAK | ';' ]
 
 SMALL_STATEMENT: PASS_STATEMENT | OPERATOR_STATEMENT | RETURN_STATEMENT | BREAK_STATEMENT | 
