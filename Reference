@@ -28,11 +28,11 @@ const const_name: type [ := value [ ; ] ]
 
 So we can do these things:
 x: int := 123;
-const y: string = "Hello world!";
-const xyz: real = 123.e+234
-_zyfe19334: real = -0.3892 + 32.0 * 3344;
-x: array[10:int] = [0, 1, 2, 3, 4, 5, 6, 8, 9]
-const tree: array[2:string] = ["branch 0", "branch 1"];
+const y: string := "Hello world!";
+const xyz: real := 123.e+234
+_zyfe19334: real := -0.3892 + 32.0 * 3344;
+x: array[10:int] := [0, 1, 2, 3, 4, 5, 6, 8, 9]
+const tree: array[2:string] := ["branch 0", "branch 1"];
 
 <#####################################################################################################>
 
