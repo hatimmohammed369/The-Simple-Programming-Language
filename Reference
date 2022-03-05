@@ -102,3 +102,12 @@ while condition
 end "while condition statement"
 
 <#####################################################################################################>
+
+EMPTY BLOCK:
+fn func()
+    pass
+end "func()"
+
+<#####################################################################################################>
+
+We also have the all usual (break), (continue) and (return) statements
