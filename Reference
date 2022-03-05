@@ -60,7 +60,7 @@ ALL BLOCK STATEMENTS MUST HAVE (end "something") to denote their end
 
 <#####################################################################################################>
 
-Functions:
+FUNCTIONS:
 fn function_name(parameters_list): return_type
     body
 end "anything you like here"
@@ -69,6 +69,7 @@ parameters_list can be empty
 
 <#####################################################################################################>
 
+IF STATEMENT:
 If condition0
     body
 [
@@ -85,5 +86,12 @@ else:
     body
 ]
 end "anything"
+
+<#####################################################################################################>
+
+FOR STATEMENT:
+for name in array_variable
+    body
+end "jfskjsgknkdngln"
 
 <#####################################################################################################>
