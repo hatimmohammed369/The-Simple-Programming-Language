@@ -22,4 +22,6 @@ OPERATOR_STATEMENT: EXPRESSION OPERATOR EXPRESSION
 
 OPERATOR: LOGICAL_OPERATOR | ARITHMETIC_OPERATOR | ASSIGNMENT_OPERATOR 
 
-LOGICAL_OPERATOR: '==' | '!=' | '<' | '<=' | '>' | '>='
+LOGICAL_OPERATOR: '==' | '!=' | '<' | '<=' | '>' | '>=' | 'not' | 'and' | 'or'
+
+ARITHMETIC_OPERATOR: '+' | '-' | '*' | '/'
