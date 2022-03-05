@@ -68,3 +68,22 @@ end "anything you like here"
 parameters_list can be empty
 
 <#####################################################################################################>
+
+If condition0
+    body
+[
+else if condition1
+    body
+.
+.
+.
+else if condition_n
+    body
+]
+[
+else:
+    body
+]
+end "anything"
+
+<#####################################################################################################>
