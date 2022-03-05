@@ -23,4 +23,7 @@ const y: string = "Hello world!";
 const xyz: real = 123.e+234
 _zyfe19334: real = -0.3892 + 32.0 * 3344;
 
+This language is indented-blocked
+Blocks of code are denoted by their indentation level
+
 
