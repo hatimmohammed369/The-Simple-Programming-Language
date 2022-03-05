@@ -2,6 +2,7 @@
 # +      =>  1 or more
 # [xyz]  =>  xyz is optional
 # () are used for grouping
+# anything between '' is denotes just itself, so '(' denotes an actual ( written in cod3
 
 MODULE: STATEMENT*
 
@@ -13,4 +14,6 @@ RETURN_STATEMENT: 'return' EXPRESSION
 
 EXPRESSION: NAME | LITERAL | FUNCTION_CALL
 
+FUNCTION_CALL: NAME '(' EXPRESSION_LIST ')'
 
+EXPRESSION_LIST: EXPRESSION ( ',' EXPRESSION )*
