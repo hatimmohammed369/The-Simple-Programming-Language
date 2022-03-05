@@ -26,4 +26,15 @@ _zyfe19334: real = -0.3892 + 32.0 * 3344;
 This language is indented-blocked
 Blocks of code are denoted by their indentation level
 
+Simple I/O:
+write(var0, var1, ..., varn)
+read(&var0, &var1, ..., &varn)
+
+This &var0 notations is for (references), which are simply actual variables not just values
+So things like this are NOT allowed:
+read(7);
+But this is allowed:
+x: int = 0
+read(&x)
+
 
