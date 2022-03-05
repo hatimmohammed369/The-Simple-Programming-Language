@@ -56,4 +56,11 @@ If
 For
 While
 
+<#####################################################################################################>
 
+Functions:
+fn function_name(parameters_list): return_type
+    body
+end "anything you like here"
+
+parameters_list can be empty
