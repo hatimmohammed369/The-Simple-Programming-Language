@@ -29,6 +29,7 @@ KEYWORDS = (
     "foreach",
     "match",
     "case",
+    "default",
     "end",
     "function",
     "return",
