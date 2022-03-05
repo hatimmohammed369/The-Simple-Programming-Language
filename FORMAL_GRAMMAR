@@ -12,7 +12,7 @@ SMALL_STATEMENT: 'pass' | 'break' | 'continue' | RETURN_STATEMENT | OPERATOR_STA
 
 RETURN_STATEMENT: 'return' EXPRESSION
 
-EXPRESSION: NAME | LITERAL | FUNCTION_CALL
+EXPRESSION: NAME | LITERAL | FUNCTION_CALL | CONST_VAR_DECLARATION
 
 FUNCTION_CALL: NAME '(' EXPRESSION_LIST ')'
 
@@ -27,3 +27,15 @@ LOGICAL_OPERATOR: '==' | '!=' | '<' | '<=' | '>' | '>=' | 'not' | 'and' | 'or'
 ARITHMETIC_OPERATOR: '+' | '-' | '*' | '/' | '++' | '--'
 
 ASSIGNMENT_OPERATOR: ':=' | '=' | '+=' | '-=' | '*=' | '/=' | '~=' | '&=' | '|=' | '^=' | '>>=' | '<<='
+
+CONST_VAR_DECLARATION: [ 'const' ] NAME_LIST: '(' TYPE_LIST ')' = EXPRESSION_LIST
+
+NAME_LIST: NAME ( ',' NAME )*
+
+TYPE_LIST: TYPE ( ',' TYPE )*
+
+TYPE: USER_DEFINED_TYPE | PRIMITIVE_DATA_TYPE
+
+PRIMITIVE_DATA_TYPE: 'int' | 'real' | 'string' | 'bool' | ARRAY_TYPE
+
+ARRAY_TYPE: 'array' [ '[' POSITIVE_INTEGER ':' TYPE ']' ]
