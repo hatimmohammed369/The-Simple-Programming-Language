@@ -1,0 +1,8 @@
+# *      =>  0 or more
+# +      =>  1 or more
+# [xyz]  =>  xyz is optional
+# () are used for grouping
+
+MODULE: STATEMENT*
+
+STATEMENT: ( SMALL_STATEMENT | BLOCK_STATEMENT ) [ [';'] NEW_LINE | ';' ]
