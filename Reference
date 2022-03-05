@@ -120,8 +120,10 @@ We also have the all usual (break), (continue) and (return) statements
 
 <#####################################################################################################>
 
-Operators: Arthimetic or Logical or ':=', which is used for defining new variable/constants
+Operators: Arthimetic or Logical or Assignment_Operator
 Arthimetic: Real_Number_Operator or Integer_Bitwise_Operator
 Real_Number_Operator: + - * / 
 Integer_Bitwise_Operator: ~:not &:and |:or ^:xor >>:right_shift <<:left_shift
 Logical: == != < <= > >=
+Assignment_Operator:
+:= = += -= *= /= ~= &= |= ^= >>= <<=
