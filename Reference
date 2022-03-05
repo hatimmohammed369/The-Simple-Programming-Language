@@ -56,6 +56,8 @@ If
 For
 While
 
+ALL BLOCK STATEMENTS MUST HAVE (end "something") to denote their end
+
 <#####################################################################################################>
 
 Functions:
@@ -64,3 +66,5 @@ fn function_name(parameters_list): return_type
 end "anything you like here"
 
 parameters_list can be empty
+
+<#####################################################################################################>
