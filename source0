@@ -1,0 +1,11 @@
+# Solve system of linear equations
+
+int rows, columns = 0, 0;
+
+write("Enter rows:\n");
+read("{}", rows)
+
+write("Enter columns:");
+read(&columns);
+
+array[rows array[columns float]] system;
