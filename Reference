@@ -124,6 +124,6 @@ Operators: Arthimetic or Logical or Assignment_Operator
 Arthimetic: Real_Number_Operator or Integer_Bitwise_Operator
 Real_Number_Operator: + - * / 
 Integer_Bitwise_Operator: ~:not &:and |:or ^:xor >>:right_shift <<:left_shift
-Logical: == != < <= > >=
+Logical: == != < <= > >= and not or
 Assignment_Operator:
 := = += -= *= /= ~= &= |= ^= >>= <<=
