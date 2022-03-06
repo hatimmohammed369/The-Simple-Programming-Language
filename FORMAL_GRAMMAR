@@ -4,6 +4,9 @@
 # () are used for grouping
 # anything between '' is denotes just itself, so '(' denotes an actual ( written in code
 
+KEYWORDS: 'var' | 'const' | 'int' | 'real' | 'string' | 'bool' | 'not' | 'and' | 'or' | 'true' | 'false' | 'array' | 'ref_of' |
+    'fn' | 'return' | 'if' | 'else' | 'else_if' | 'for' | 'while' | 'break' | 'continue' | 'pass'
+
 MODULE: STATEMENT*
 
 STATEMENT: ( SMALL_STATEMENT | BLOCK_STATEMENT ) [ [';'] LINE_BREAK | ';' ]
@@ -54,7 +57,7 @@ BLOCK: INDENT STATEMENT+ OUTDENT
 
 END_STATEMENT: 'end' STRING
 
-IF_STATEMENT: 'if' EXPRESSION BLOCK [ 'else if' BLOCK ] [ 'else' BLOCK ] END_STATEMENT
+IF_STATEMENT: 'if' EXPRESSION BLOCK [ 'else_if' BLOCK ] [ 'else' BLOCK ] END_STATEMENT
 
 FOR_STATEMENT: 'for' NAME 'in' ARRAY_EXPRESSION BLOCK END_STATEMENT
 
