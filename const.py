@@ -65,7 +65,7 @@ OPERATORS = (
     "<<=",
 )
 
-SEPARATORS = ("[", "]", "(", ")", ",", ":")
+SEPARATORS = ("[", "]", "(", ")", ",", ":", ";")
 
 INT_PATTERN = re.compile(r"[+-]{0,1}\d+([eE][+-]{0,1}\d+){0,1}")
 
