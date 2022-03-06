@@ -1,6 +1,7 @@
 # KEYWORDS / OPERATORS / ...
 # You know, those sorts of things
 
+
 KEYWORDS = (
     "var",
     "const",
@@ -27,7 +28,9 @@ KEYWORDS = (
     "pass",
 )
 
+
 OPERATORS = (
+    # ARITHMETIC_OPERATORS
     "+",
     "-",
     "*",
@@ -38,6 +41,7 @@ OPERATORS = (
     "^",
     ">>",
     "<<",
+    # LOGICAL_OPERATORS
     "==",
     "!=",
     "<",
@@ -47,6 +51,7 @@ OPERATORS = (
     "not",
     "and",
     "or",
+    # ASSIGNMENT_OPERATORS
     ":=",
     "=",
     "+=",
@@ -60,3 +65,6 @@ OPERATORS = (
     ">>=",
     "<<=",
 )
+
+
+SEPARATORS = ("[", "]", "(", ")", ",", ":")
