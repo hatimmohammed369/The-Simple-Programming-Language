@@ -36,7 +36,7 @@ NAME_LIST: NAME ( ',' NAME )*
 
 TYPE_LIST: TYPE ( ',' TYPE )*
 
-TYPE: USER_DEFINED_TYPE | PRIMITIVE_DATA_TYPE
+TYPE: [ 'const' | 'var' ] USER_DEFINED_TYPE | PRIMITIVE_DATA_TYPE [ '&' ]
 
 PRIMITIVE_DATA_TYPE: 'int' | 'real' | 'string' | 'bool' | ARRAY_TYPE
 

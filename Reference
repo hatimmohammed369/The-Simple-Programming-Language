@@ -36,6 +36,12 @@ const tree: array[2:string] := ["branch 0", "branch 1"];
 const right: bool = true;
 var go: bool = false
 
+Reference:
+Pointer to an actual variable/constant, mutating reference mutates the pointed variable/constant
+var x: int = -13;
+var x_ref: int& = ref_of x
+x_ref = 123; # now (x) will also take value 123
+
 <#####################################################################################################>
 
 This language is indented-blocked
