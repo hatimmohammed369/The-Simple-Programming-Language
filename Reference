@@ -21,20 +21,20 @@ array   =>  static size single-type-data containers, they hold multiple values o
 <#####################################################################################################>
 
 Variables and Constants:
-variable_name: type [ := value [ ; ] ]
+var variable_name: type [ := value [ ; ] ]
 const const_name: type [ := value [ ; ] ]
 
 <#####################################################################################################>
 
 So we can do these things:
-x: int := 123;
+var x: int := 123;
 const y: string := "Hello world!";
 const xyz: real := 123.e+234
-_zyfe19334: real := -0.3892 + 32.0 * 3344;
-x: array[10:int] := [0, 1, 2, 3, 4, 5, 6, 8, 9]
+var _zyfe19334: real := -0.3892 + 32.0 * 3344;
+var x: array[10:int] := [0, 1, 2, 3, 4, 5, 6, 8, 9]
 const tree: array[2:string] := ["branch 0", "branch 1"];
 const right: bool = true;
-go: bool = false
+var go: bool = false
 
 <#####################################################################################################>
 
@@ -53,7 +53,7 @@ This &var0 notations is for (references), which are simply actual variables not 
 So things like this are NOT allowed:
 read(7);
 But this is allowed:
-x: int = 0
+var x: int = 0
 read(&x)
 
 <#####################################################################################################>

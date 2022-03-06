@@ -2,7 +2,7 @@
 # +      =>  1 or more
 # [xyz]  =>  xyz is optional
 # () are used for grouping
-# anything between '' is denotes just itself, so '(' denotes an actual ( written in cod3
+# anything between '' is denotes just itself, so '(' denotes an actual ( written in code
 
 MODULE: STATEMENT*
 
@@ -30,7 +30,7 @@ ARITHMETIC_OPERATOR: '+' | '-' | '*' | '/' | '++' | '--'
 
 ASSIGNMENT_OPERATOR: ':=' | '=' | '+=' | '-=' | '*=' | '/=' | '~=' | '&=' | '|=' | '^=' | '>>=' | '<<='
 
-CONST_VAR_DECLARATION: [ 'const' ] NAME_LIST: '(' TYPE_LIST ')' = EXPRESSION_LIST
+CONST_VAR_DECLARATION: ( 'const' | 'var' ) NAME_LIST: '(' TYPE_LIST ')' = EXPRESSION_LIST
 
 NAME_LIST: NAME ( ',' NAME )*
 
@@ -48,7 +48,7 @@ FUNCTION_STATEMENT: 'fn' NAME '(' PARAMETER_LIST ')' [ ':' TYPE ] BLOCK END_STAT
 
 PARAMETER_LIST: PARAMETER ( ',' PARAMETER )*
 
-PARAMETER: [ 'const' ] NAME ':' TYPE
+PARAMETER: ( 'const' | 'var' ) NAME ':' TYPE
 
 BLOCK: INDENT STATEMENT+ OUTDENT
 
