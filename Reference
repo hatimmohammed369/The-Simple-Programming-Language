@@ -141,3 +141,4 @@ Integer_Operator: ~:not &:and |:or ^:xor >>:right_shift <<:left_shift ++ --
 Logical: == != < <= > >= and not or
 Assignment_Operator:
 := = += -= *= /= ~= &= |= ^= >>= <<=
+Also the reference operator: &
