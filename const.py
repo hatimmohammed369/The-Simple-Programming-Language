@@ -1,6 +1,6 @@
 # KEYWORDS / OPERATORS / ...
 # You know, those sorts of things
-
+import re
 
 KEYWORDS = (
     "var",
@@ -27,7 +27,6 @@ KEYWORDS = (
     "continue",
     "pass",
 )
-
 
 OPERATORS = (
     # ARITHMETIC_OPERATORS
@@ -66,5 +65,18 @@ OPERATORS = (
     "<<=",
 )
 
-
 SEPARATORS = ("[", "]", "(", ")", ",", ":")
+
+INT_PATTERN = re.compile(r"[+-]{0,1}\d+([eE][+-]{0,1}\d+){0,1}")
+
+FLOAT_PATTERN = re.compile(
+    r"[+-]{0,1}\d+[.]\d*([eE][+-]{0,1}\d+){0,1}|[+-]{0,1}\d*[.]\d+([eE][+-]{0,1}\d+){0,1}"
+)
+
+NUMBER_PATTERN = re.compile(FLOAT_PATTERN.pattern + "|" + INT_PATTERN.pattern)
+
+STRING_PATTERN = re.compile(r'f{0,1}".*?(?<!\\)"')
+
+INDENT_PATTERN = re.compile(r"[ ]{4}|[\t]")  # 4 consecutive spaces or a single tab
+
+NAME_PATTERN = re.compile(r"[_a-zA-Z][_a-zA-Z0-9]*")
