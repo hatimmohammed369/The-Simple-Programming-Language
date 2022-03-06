@@ -36,6 +36,12 @@ const tree: array[2:string] := ["branch 0", "branch 1"];
 const right: bool = true;
 var go: bool = false
 
+And as usual, this is how you index arrays:
+const x: [4:string] = ['false', 'False', 'True', 'true']
+x[0] is 'false'
+x[1] is 'False'
+And so on
+
 Reference:
 Pointer to an actual variable/constant, mutating reference mutates the pointed variable/constant
 var x: int = -13;
