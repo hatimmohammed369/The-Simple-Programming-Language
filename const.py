@@ -115,3 +115,5 @@ OPERATOR_PATTERN = re.compile(
     r">>=|"
     r"<<=|"
 )
+
+SEPARATOR_PATTERN = re.compile(r";|:|,|\[|]|\(|\)|")
