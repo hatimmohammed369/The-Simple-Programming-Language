@@ -28,6 +28,8 @@ KEYWORDS = (
     "pass",
 )
 
+PRIMITIVE_DATA_TYPES = ("int", "real", "bool", "string", "array")
+
 OPERATORS = (
     # ARITHMETIC_OPERATORS
     "+",
