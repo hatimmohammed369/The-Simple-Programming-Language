@@ -4,10 +4,8 @@
 # () are used for grouping
 # anything between '' is denotes just itself, so '(' denotes an actual ( written in code
 
-KEYWORDS: 'var' | 'const' | 'int' | 'real' | 'string' | 'bool' | 'not' | 'and' | 'or' | 'true' | 'false' | 'array' | 'ref_of' |
-    'fn' | 'return' | 'if' | 'else' | 'else_if' | 'for' | 'while' | 'break' | 'continue' | 'pass'
-
-MODULE: STATEMENT*
+KEYWORDS: 'define' | 'var' | 'const' | 'int' | 'real' | 'string' | 'bool' | 'not' | 'and' | 'or' | 'true' | 'false' | 'array' | 'ref_of' |
+    'function' | 'return' | 'if' | 'else' | 'else_if' | 'for' | 'while' | 'break' | 'continue' | 'pass'
 
 STATEMENT: ( SMALL_STATEMENT | BLOCK_STATEMENT ) [ [';'] LINE_BREAK | ';' ]
 
@@ -15,7 +13,7 @@ SMALL_STATEMENT: 'pass' | 'break' | 'continue' | RETURN_STATEMENT | OPERATOR_STA
 
 RETURN_STATEMENT: 'return' EXPRESSION
 
-EXPRESSION: NAME | LITERAL | FUNCTION_CALL | CONST_VAR_DECLARATION | ARRAY_SUBSCRIPTION
+EXPRESSION: NAME | LITERAL | FUNCTION_CALL | CONST_VAR_DEFINITION | ARRAY_SUBSCRIPTION
 
 ARRAY_SUBSCRIPTION: NAME '[' NON_NEGATIVE_INTEGER ']'
 
@@ -25,7 +23,7 @@ FUNCTION_CALL: NAME '(' EXPRESSIONS_LIST ')'
 
 EXPRESSIONS_LIST: EXPRESSION ( ',' EXPRESSION )*
 
-OPERATOR_STATEMENT: EXPRESSION OPERATOR EXPRESSION
+OPERATOR_STATEMENT: EXPRESSION ( OPERATOR EXPRESSION )+
 
 OPERATOR: LOGICAL_OPERATOR | ARITHMETIC_OPERATOR | ASSIGNMENT_OPERATOR 
 
@@ -35,13 +33,9 @@ ARITHMETIC_OPERATOR: '+' | '-' | '*' | '/' | '++' | '--'
 
 ASSIGNMENT_OPERATOR: ':=' | '=' | '+=' | '-=' | '*=' | '/=' | '~=' | '&=' | '|=' | '^=' | '>>=' | '<<='
 
-CONST_VAR_DECLARATION: ( 'const' | 'var' ) NAMES_LIST: '(' TYPES_LIST ')' = EXPRESSIONS_LIST
+CONST_VAR_DEFINITION: 'define' (NAME ':' TYPE ':=' EXPRESSION)+
 
-NAMES_LIST: NAME ( ',' NAME )*
-
-TYPES_LIST: TYPE ( ',' TYPE )*
-
-TYPE: [ 'const' | 'var' ] USER_DEFINED_TYPE | PRIMITIVE_DATA_TYPE [ '&' ]
+TYPE: [ 'const' | 'var' ] ( USER_DEFINED_TYPE | PRIMITIVE_DATA_TYPE ) [ '&' ]
 
 PRIMITIVE_DATA_TYPE: 'int' | 'real' | 'string' | 'bool' | ARRAY_TYPE
 
@@ -49,11 +43,11 @@ ARRAY_TYPE: 'array' [ '[' NON_NEGATIVE_INTEGER ':' TYPE ']' ]
 
 BLOCK_STATEMENT: FUNCTION_STATEMENT | IF_STATEMENT | FOR_STATEMENT | WHILE_STATEMENT
 
-FUNCTION_STATEMENT: 'fn' NAME '(' PARAMETERS_LIST ')' [ ':' TYPE ] BLOCK END_STATEMENT
+FUNCTION_STATEMENT: 'function' NAME '(' PARAMETERS_LIST ')' [ ':' TYPE ] BLOCK END_STATEMENT
 
 PARAMETERS_LIST: PARAMETER ( ',' PARAMETER )*
 
-PARAMETER: ( 'const' | 'var' ) NAME ':' TYPE
+PARAMETER: NAME ':' TYPE
 
 BLOCK: INDENT STATEMENT+ OUTDENT
 

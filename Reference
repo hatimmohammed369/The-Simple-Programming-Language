@@ -25,31 +25,33 @@ array   =>  static size single-type-data containers, they hold multiple values o
 <#####################################################################################################>
 
 Variables and Constants:
-var variable_name: type [ := value [ ; ] ]
-const const_name: type [ := value [ ; ] ]
+define variable_name: type [ := value [ ; ] ]
+define const_name: type [ := value [ ; ] ]
+
+type: (var) or (const) not both, then a primitive or user-defined type, and then the optional & reference indicator
 
 <#####################################################################################################>
 
 So we can do these things:
-var x: int := 123;
-const y: string := "Hello world!";
-const xyz: real := 123.e+234
-var _zyfe19334: real := -0.3892 + 32.0 * 3344;
-var x: array[10:int] := [0, 1, 2, 3, 4, 5, 6, 8, 9]
-const tree: array[2:string] := ["branch 0", "branch 1"];
-const right: bool = true;
-var go: bool = false
+define x: var int := 123;
+define y: const string := "Hello world!";
+define xyz: const real := 123.e+234
+define _zyfe19334: var real := -0.3892 + 32.0 * 3344;
+define x: var array[10:int] := [0, 1, 2, 3, 4, 5, 6, 8, 9]
+define tree: const array[2:string] := ["branch 0", "branch 1"];
+define right: const bool = true;
+define go: var bool = false
 
 And as usual, this is how you index arrays:
-const x: [4:string] = ['false', 'False', 'True', 'true']
+define x: const [4:string] = ['false', 'False', 'True', 'true']
 x[0] is 'false'
 x[1] is 'False'
 And so on
 
 Reference:
 Pointer to an actual variable/constant, mutating reference mutates the pointed variable/constant
-var x: int = -13;
-var x_ref: int& = ref_of x
+define x: var int = -13;
+define x_ref: var int& = ref_of x
 x_ref = 123; # now (x) will also take value 123
 
 <#####################################################################################################>
