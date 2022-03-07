@@ -93,8 +93,8 @@ class Tokenizer:
         steps = 1
         if self.current_char != "":  # it is not EOF
             if self.current_char == "\n":
-                # NEWLINE
-                token = Token(name="NEWLINE", value="\n", begin=self.pos())
+                # LINE_BREAK
+                token = Token(name="LINE_BREAK", value="\n", begin=self.pos())
                 token.end = Pos(token.begin.idx + 1, token.begin.col + 1, self.ln)
                 steps = 1
 
@@ -103,7 +103,7 @@ class Tokenizer:
                 # COMMENT
                 next_new_line = self.text.find(
                     "\n", self.idx
-                )  # NEWLINE is the only thing that stops a comment
+                )  # LINE_BREAK is the only thing that stops a comment
                 token = Token(name="COMMENT")
                 token.begin = self.pos()
                 if next_new_line != -1:
@@ -126,8 +126,6 @@ class Tokenizer:
                 if self.tokens_list[-1].value == "end":
                     # this line is like: end "some text here"
                     token.name = "END_LABEL"
-                else:
-                    token.name = "F-STRING" if match_value[0] == "f" else "STRING"
                 token.begin = begin = self.pos()
                 token.end = Pos(
                     begin.idx + len(token.value), begin.col + len(token.value), begin.ln
@@ -267,7 +265,7 @@ class Tokenizer:
 
                     if error == "":
                         # this is not first line
-                        # Dont add Indent/Dedent token only if captured_indent_level is not 0
+                        # Dont add Indent/Outdent token only if captured_indent_level is not 0
                         current_indent_level = self.indent_stack[-1]
 
                         begin = self.pos()
