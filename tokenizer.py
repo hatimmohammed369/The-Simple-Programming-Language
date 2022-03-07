@@ -169,6 +169,16 @@ class Tokenizer:
                 )
                 steps = len(token.value)
 
+            elif op := OPERATOR_PATTERN.match(string=self.text, pos=self.idx):
+                begin = self.pos()
+                token = Token(begin=begin)
+                token.name = token.value = op.group()
+
+                token.end = Pos(
+                    begin.idx + len(token.value), begin.col + len(token.value), self.ln
+                )
+                steps = len(token.value)
+
             elif number_match := NUMBER_PATTERN.match(string=self.text, pos=self.idx):
                 # A NUMBER
                 match_value = number_match.group()
