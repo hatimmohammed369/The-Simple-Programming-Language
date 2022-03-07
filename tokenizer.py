@@ -182,12 +182,13 @@ class Tokenizer:
                 match_value = number_match.group()
                 begin = self.pos()
                 token = Token(name="NUMBER", begin=begin)
+                token.value = match_value
                 if INT_PATTERN.match(string=match_value):
                     # int
-                    token.value = int(match_value)
+                    token.name = "INT_" + token.name
                 else:
                     # float
-                    token.value = float(match_value)
+                    token.name = "FLOAT_" + token.name
                 end = Pos(
                     token.begin.idx + len(str(token.value)),
                     token.begin.col + len(str(token.value)),
