@@ -137,3 +137,7 @@ SEPARATOR_PATTERN = re.compile(
     + "|"
     + r"\)"
 )
+
+ARRAY_TYPE_PATTERN = re.compile(
+    rf"array\[{INT_PATTERN.pattern}:{NAME_PATTERN.pattern}]"
+)
