@@ -1,0 +1,5 @@
+What I indent to do here is traverse through text token by token, and in each token, depending on its data, I use different rules
+For instance, if I encounter keyword 'define' then I know this is a variable/constant definition coming, so the next logical item to come is a valid variable/constant name, otherwise this is a syntax error
+Now let's assume I found 'define' and a valid variable/constant name, next I must find a ':' and then valid type and so on
+
+SO this is how I want to implement this SyntaxAnalyzer class
