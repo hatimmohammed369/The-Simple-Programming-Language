@@ -144,33 +144,32 @@ class Tokenizer:
                 )
 
                 if token.value in KEYWORDS:
-                    token.name = "KEYWORD"
-                else:
-                    if current_identifier in self.identifiers_table:
-                        # we met this identifier before
-                        token.name = self.identifiers_table[token.value][-1].name
-                        self.identifiers_table[token.value].append(token)
+                    if token.value in ('not', 'and', 'or'):
+                        token.name = 'OPERATOR'
                     else:
-                        # A new identifier
-                        token.name = "NAME"
-                        self.identifiers_table[token.value] = [token]
+                        token.name = "KEYWORD"
+                else:
+                    token.name = "NAME"
                 steps = len(token.value)
 
-            elif sep := SEPARATOR_PATTERN.match(string=self.text, pos=self.idx):
-                # SOMETHING LIKE *, +, {, %, ;, .....
+            elif op := OPERATOR_PATTERN.match(string=self.text, pos=self.idx):
+                # ALL SORTS OF OPERATORS
                 begin = self.pos()
                 token = Token(begin=begin)
-                token.name = token.value = sep.group()
+                token.name = 'OPERATOR'
+                token.value = op.group()
 
                 token.end = Pos(
                     begin.idx + len(token.value), begin.col + len(token.value), self.ln
                 )
                 steps = len(token.value)
 
-            elif op := OPERATOR_PATTERN.match(string=self.text, pos=self.idx):
+            elif sep := SEPARATOR_PATTERN.match(string=self.text, pos=self.idx):
+                #(, ), {, }, :, (,), ;
                 begin = self.pos()
                 token = Token(begin=begin)
-                token.name = token.value = op.group()
+                token.name = "SEPARATOR"
+                token.value = sep.group()
 
                 token.end = Pos(
                     begin.idx + len(token.value), begin.col + len(token.value), self.ln
