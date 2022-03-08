@@ -90,38 +90,39 @@ INDENT_PATTERN = re.compile(r"[ ]{4}|[\t]")  # 4 consecutive spaces or a single 
 NAME_PATTERN = re.compile(r"[_a-zA-Z][_a-zA-Z0-9]*")
 
 OPERATOR_PATTERN = re.compile(
-    # ARITHMETIC_OPERATORS``
-    r"[+]{1,2}|"  # to match either + or ++
-    r"-{1,2}|"  # to match either - or --
-    r"[*]|"
-    r"/|"
-    r"~|"
-    r"&|"
-    r"[|]|"  # r"|" will always match empty strings
-    r">>|"
-    r"<<|"
-    # LOGICAL_OPERATORS
-    r"==|"
-    r"!=|"
-    r"<|"
-    r"<=|"
-    r">|"
-    r">=|"
     r"not|"
     r"and|"
     r"or|"
-    # ASSIGNMENT_OPERATORS
-    r"=|"
-    r":=|"
+    r"[+][+]|"
     r"[+]=|"
+    r"--|"
     r"-=|"
     r"[*]=|"
     r"/=|"
     r"~=|"
     r"&=|"
     r"[|]=|"
+    r"\^="
     r">>=|"
-    r"<<="
+    r">>|"
+    r"<<=|"
+    r"<<=|"
+    r":=|"
+    r"==|"
+    r"!=|"
+    r"<=|"
+    r">=|"
+    r"[+]|"
+    r"-|"
+    r"[*]|"
+    r"/|"
+    r"~|"
+    r"&|"
+    r"[|]|"
+    r"\^|"
+    r"<|"
+    r">|"
+    r"="
 )
 
 SEPARATOR_PATTERN = re.compile(
