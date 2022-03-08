@@ -5,10 +5,11 @@ from typing import Union, List
 from dataclasses import dataclass
 
 
-class AST_Node:
+class Syntax_Tree_Node:
     def __init__(self):
         self.name: List[str] = []  # FORMAL_GRAMMAR entry hierarchy
         # something like: ["EXPRESSION", "SIMPLE_EXPRESSION", "NAME"]
+        # Last element in self.name represents the FORMAL_GRAMMAR name of this object
 
 
 # EXPRESSION: SIMPLE_EXPRESSION | COMPOUND_EXPRESSION
@@ -27,9 +28,163 @@ class AST_Node:
 #
 # OPERATOR_EXPRESSION: UNARY_OPERATOR SIMPLE_EXPRESSION | SIMPLE_EXPRESSION ( BINARY_OPERATOR SIMPLE_EXPRESSION )+
 
+# TYPE CLASS
+class EXPRESSION_Node(Syntax_Tree_Node):
+    # This FORMAL_GRAMMAR unit has these 2 kinds
+    types = (
+        "SIMPLE_EXPRESSION",
+        "COMPOUND_EXPRESSION",
+    )
+
+    def __init__(self, type_name=""):
+        super().__init__()
+
+        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
+        self.name.append("EXPRESSION")
+
+
+# TYPE CLASS
+class EXPRESSION_SIMPLE_Node(EXPRESSION_Node):
+    types = ("NAME", "LITERAL")
+
+    def __init__(self, type_name=""):
+        super().__init__()
+
+        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
+        self.name.append("SIMPLE_EXPRESSION")
+
+
+# TYPE CLASS
+class EXPRESSION_COMPOUND_Node(EXPRESSION_Node):
+    types = (
+        "FUNCTION_CALL",
+        "CONST_VAR_DEFINITION",
+        "ARRAY_SUBSCRIPTION",
+        "OPERATOR_EXPRESSION",
+    )
+
+    def __init__(self, type_name=""):
+        super().__init__()
+
+        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
+        self.name.append("COMPOUND_EXPRESSION")
+
+
+# <====================================================================================================>
+# FORMAL_GRAMMAR units with no types have no class attribute (type), instead they have class attribute (parts)
+# AND also they have special instance attributes which vary between different classes
+# For instance, object attributes of ARRAY_SUBSCRIPTION will not be the same as EXPRESSIONS_LIST
+# <====================================================================================================>
+
+
+# CONCRETE CLASS
+class EXPRESSION_ARRAY_SUBSCRIPTION_Node(EXPRESSION_SIMPLE_Node):
+    parts = ("NAME", "[", "NON_NEGATIVE_INTEGER", "]")
+
+    def __init__(self, array_name="", non_negative_integer=0):
+        super().__init__()
+
+        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
+        self.name.append("ARRAY_SUBSCRIPTION")
+
+        if non_negative_integer < 0:
+            raise ValueError(f"{non_negative_integer} is less than 0")
+        else:
+            self.array_name = array_name
+            self.non_negative_integer = non_negative_integer
+
+
+# CONCRETE CLASS
+class EXPRESSION_NAME_Node(EXPRESSION_SIMPLE_Node):
+    parts = ("NAME",)  # Since it's a single unit in and of itself
+
+    def __init__(self, name_string=""):
+        super().__init__()
+
+        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
+        self.name.append("NAME")
+        self.name_string = name_string  # Class-Object-specifics attributes
+
+
+# TYPE CLASS
+class EXPRESSION_LITERAL_Node(EXPRESSION_SIMPLE_Node):
+    types = ("NUMBER", "STRING")
+
+    def __init__(self, type_name=""):
+        super().__init__()
+
+        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
+        self.name.append("LITERAL")
+
+        # this (type_name) must be EXPRESSION_Node.types
+        # This EXPRESSION_LITERAL_Node object must have a type
+        # and this type must be in EXPRESSION_LITERAL_Node.types tuple defined above
+        self.type_name = type_name
+
+
+# CONCRETE CLASS
+class EXPRESSION_NUMBER_Node(EXPRESSION_SIMPLE_Node):
+    parts = ("NUMBER",)  # Since it's a single unit in and of itself
+
+    def __init__(self, number_value=""):
+        super().__init__()
+
+        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
+        self.name.append("NUMBER")
+        if not NUMBER_PATTERN.fullmatch(number_value):
+            raise ValueError(f"{number_value} is not a valid numeric literal")
+        self.number_value = number_value  # Class-Object-specifics attributes
+
+
+# CONCRETE CLASS
+class EXPRESSION_STRING_Node(EXPRESSION_SIMPLE_Node):
+    parts = ("STRING",)  # Since it's a single unit in and of itself
+
+    def __init__(self, string_value=""):
+        super().__init__()
+
+        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
+        self.name.append("STRING")
+        self.string_value = string_value  # Class-Object-specifics attributes
+
+
+# CONCRETE CLASS
+class EXPRESSION_EXPRESSIONS_LIST_Node(EXPRESSION_SIMPLE_Node):
+    parts = ("EXPRESSIONS",)
+
+    def __init__(self, expressions_list: List[EXPRESSION_Node] = None):
+        super().__init__()
+        if expressions_list is None:
+            expressions_list: List[EXPRESSION_Node] = []
+
+        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
+        self.name.append("EXPRESSIONS_LIST")
+        self.expressions_list: List[
+            EXPRESSION_Node
+        ] = expressions_list  # Class-Object-specifics attributes
+
+
+# CONCRETE CLASS
+class EXPRESSION_FUNCTION_CALL_Node(EXPRESSION_SIMPLE_Node):
+    parts = ("NAME", "EXPRESSIONS_LIST")
+
+    def __init__(
+        self, function_name="", expressions_list: List[EXPRESSION_Node] = None
+    ):
+        super().__init__()
+        if expressions_list is None:
+            expressions_list: List[EXPRESSION_Node] = []
+
+        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
+        self.name.append("FUNCTION_CALL")
+        self.expressions_list: List[
+            EXPRESSION_Node
+        ] = expressions_list  # Class-Object-specifics attributes
+        self.function_name = function_name
+
 
 class Result:
-    def __init__(self, error: str = "", astNode: AST_Node = AST_Node()):
+    def __init__(self, error: str = "", astNode: Syntax_Tree_Node = Syntax_Tree_Node()):
         self.error = error
         self.ast_node = astNode
 
