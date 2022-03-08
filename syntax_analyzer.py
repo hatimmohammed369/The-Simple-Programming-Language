@@ -1,6 +1,5 @@
 #!/usr/local/bin/python3.10
 
-from asyncio import current_task
 from tokenizer import *
 from typing import Union, List
 from dataclasses import dataclass
@@ -8,7 +7,8 @@ from dataclasses import dataclass
 
 class AST_Node:
     def __init__(self):
-        self.name: List[str] = []
+        self.name: List[str] = []  # FORMAL_GRAMMAR entry hierarchy
+        # something like: ["EXPRESSION", "SIMPLE_EXPRESSION", "NAME"]
 
 
 # EXPRESSION: SIMPLE_EXPRESSION | COMPOUND_EXPRESSION
@@ -26,95 +26,6 @@ class AST_Node:
 # EXPRESSIONS_LIST: EXPRESSION ( ',' EXPRESSION )*
 #
 # OPERATOR_EXPRESSION: UNARY_OPERATOR SIMPLE_EXPRESSION | SIMPLE_EXPRESSION ( BINARY_OPERATOR SIMPLE_EXPRESSION )+
-class EXPRESSION_AST_Node(AST_Node):
-    types = ["SIMPLE_EXPRESSION", "COMPOUND_EXPRESSION"]
-
-    def __init__(self, type_name: str = ""):
-        self.name.append("EXPRESSION")
-        self.type_name: List[str] = [type_name]
-
-
-class SIMPLE_EXPRESSION_AST_Node(EXPRESSION_AST_Node):
-    types = ["NAME", "LITERAL"]
-
-    def __init__(self, type_name=""):
-        self.name.append("SIMPLE_EXPRESSION")
-        self.type_name.append(type_name)
-
-
-class COMPOUND_EXPRESSION_AST_Node(EXPRESSION_AST_Node):
-    types = [
-        "FUNCTION_CALL",
-        "CONST_VAR_DEFINITION",
-        "ARRAY_SUBSCRIPTION",
-        "OPERATOR_EXPRESSION",
-    ]
-
-    def __init__(self, type_name=""):
-        self.name.append("COMPOUND_EXPRESSION")
-        self.type_name.append(type_name)
-
-
-class COMPOUND_EXPRESSION_ARRAY_SUBSCRIPTION_AST_Node(COMPOUND_EXPRESSION_AST_Node):
-    parts = ["NAME", "[", "NON_NEGATIVE_INTEGER", "]"]
-
-    def __init__(self, array_name="", non_negative_number: int = 0):
-        if non_negative_number < 0:
-            raise ValueError("{non_negative_number} is less than zero")
-        else:
-            self.array_name = array_name
-            self.non_negative_number: int = non_negative_number
-
-
-class SIMPLE_EXPRESSION_LITERAL_AST_Node(SIMPLE_EXPRESSION_AST_Node):
-    types = ["NAME", "STRING"]
-
-    def __init__(self, literal_value=""):
-        self.type_name.append("LITERAL")
-        self.literal_value = literal_value
-
-
-class EXPRESSIONS_LIST_AST_Node(AST_Node):
-    def __init__(self, expressions_list: List[EXPRESSION_AST_Node] = None):
-        if expressions_list is None:
-            expressions_list: List[EXPRESSION_AST_Node] = []
-        self.expressions_list: List[EXPRESSION_AST_Node] = expressions_list
-        pass
-
-
-class COMPOUND_EXPRESSION_FUNCTION_CALL_AST_Node(COMPOUND_EXPRESSION_AST_Node):
-    parts = ["NAME", "(", "EXPRESSIONS_LIST", ")"]
-
-    def __init__(
-        self, function_name="", expressions_list: List[EXPRESSION_AST_Node] = None
-    ):
-        if expressions_list is None:
-            expressions_list: List[EXPRESSION_AST_Node] = []
-        self.type_name.append("FUNCTION_CALL")
-        self.function_name = function_name
-        self.expressions_list: List[EXPRESSION_AST_Node] = expressions_list
-
-
-class COMPOUND_EXPRESSION_OPERATOR_EXPRESSION_AST_Node(COMPOUND_EXPRESSION_AST_Node):
-    types = ["UNARY_OPERATOR", "BINARY_OPERATOR"]
-
-    def __init__(self):
-        self.type_name.append("OPERATOR_EXPRESSION")
-
-
-# CONST_VAR_DEFINITION: 'define' (NAME ':' TYPE ':=' EXPRESSION)+
-# TODO: Add an attribute to indicate whether this CONST_VAR_DEFINITION is a (name) or (reference)
-class CONST_VAR_DEFINITION_AST_NODE(EXPRESSION_AST_Node):
-    @dataclass(init=True, repr=True)
-    class CONST_VAR_DEFINITION_BODY:
-        """
-        Represents the (NAME ':' TYPE ':=' EXPRESSION) part
-        """
-
-        NAME: str = ""
-        # TYPE: TYPE_AST_NODE = TYPE_AST_NODE()
-
-    pass
 
 
 class Result:
@@ -162,7 +73,9 @@ class SyntaxAnalyzer:
         res = [Result()]
         phase = "NAME"
         is_ref = False  # If current definition is making a reference
-        refs = {}
+        refs = (
+            {}
+        )  # In case we find multiple definitions, this dict records which variables/constants are references
         while self.cur_tok is not None:
             old_phase = phase
             if phase == "NAME":
