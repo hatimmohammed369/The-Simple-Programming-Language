@@ -17,7 +17,7 @@ Semi-colons are optional
 
 Primitive data types:
 int     =>  Signed/Unsigned integers
-real    =>  Real number
+float   =>  Floating-Point number
 string  =>  Anything inside ""
 bool    =>  True or False
 array   =>  static size single-type-data containers, they hold multiple values of the same type
@@ -35,8 +35,8 @@ type: (var) or (const) not both, then a primitive or user-defined type, and then
 So we can do these things:
 define x: var int := 123;
 define y: const string := "Hello world!";
-define xyz: const real := 123.e+234
-define _zyfe19334: var real := -0.3892 + 32.0 * 3344;
+define xyz: const float := 123.e+234
+define _zyfe19334: var float := -0.3892 + 32.0 * 3344;
 define x: var array[10:int] := [0, 1, 2, 3, 4, 5, 6, 8, 9]
 define tree: const array[2:string] := ["branch 0", "branch 1"];
 define right: const bool = true;
@@ -141,8 +141,8 @@ We also have the all usual (break), (continue) and (return) statements
 <#####################################################################################################>
 
 Operators: Arthimetic or Logical or Assignment_Operator
-Arthimetic: Real_Number_Operator or Integer_Operator
-Real_Number_Operator: + - * / 
+Arthimetic: Float_Number_Operator or Integer_Operator
+Float_Number_Operator: + - * / 
 Integer_Operator: ~:not &:and |:or ^:xor >>:right_shift <<:left_shift ++ --
 Logical: == != < <= > >= and not or
 Assignment_Operator:
