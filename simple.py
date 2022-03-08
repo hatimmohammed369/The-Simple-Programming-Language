@@ -2,6 +2,7 @@
 if __name__ == "__main__":
     from argparse import ArgumentParser
     from tokenizer import Tokenizer
+    from syntax_analyzer import SyntaxAnalyzer
 
     parser = ArgumentParser()
 
@@ -20,3 +21,5 @@ if __name__ == "__main__":
 
     for token in tokenizer:
         print(token)
+
+    analyzer = SyntaxAnalyzer(tokenizer_object=tokenizer).analyze()
