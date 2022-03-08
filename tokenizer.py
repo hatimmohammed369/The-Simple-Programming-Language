@@ -1,5 +1,3 @@
-#!/usr/local/bin/python3.10
-
 import re
 from typing import Any, Union
 from dataclasses import dataclass
@@ -144,8 +142,8 @@ class Tokenizer:
                 )
 
                 if token.value in KEYWORDS:
-                    if token.value in ('not', 'and', 'or'):
-                        token.name = 'OPERATOR'
+                    if token.value in ("not", "and", "or"):
+                        token.name = "OPERATOR"
                     else:
                         token.name = "KEYWORD"
                 else:
@@ -156,7 +154,7 @@ class Tokenizer:
                 # ALL SORTS OF OPERATORS
                 begin = self.pos()
                 token = Token(begin=begin)
-                token.name = 'OPERATOR'
+                token.name = "OPERATOR"
                 token.value = op.group()
 
                 token.end = Pos(
@@ -165,7 +163,7 @@ class Tokenizer:
                 steps = len(token.value)
 
             elif sep := SEPARATOR_PATTERN.match(string=self.text, pos=self.idx):
-                #(, ), {, }, :, (,), ;
+                # (, ), {, }, :, (,), ;
                 begin = self.pos()
                 token = Token(begin=begin)
                 token.name = "SEPARATOR"

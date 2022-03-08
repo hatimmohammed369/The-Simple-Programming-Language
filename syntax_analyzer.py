@@ -1,5 +1,3 @@
-#!/usr/local/bin/python3.10
-
 from tokenizer import *
 from typing import Union, List
 from dataclasses import dataclass
