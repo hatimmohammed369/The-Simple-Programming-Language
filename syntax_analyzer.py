@@ -82,25 +82,25 @@ class EXPRESSION_COMPOUND_Node(EXPRESSION_Node):
 class EXPRESSION_NAME_Node(EXPRESSION_SIMPLE_Node):
     parts = ("NAME",)  # Since it's a single unit in and of itself
 
-    def __init__(self, name_string="", is_ref: bool = False):
+    def __init__(self, name_string: Token = Token(), is_ref: bool = False):
         super().__init__()
 
         # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
         self.name.append("NAME")
-        self.name_string = name_string  # Class-Object-specifics attributes
-        self.is_ref = is_ref  # this name is reference
+        self.name_string: Token = name_string  # Class-Object-specifics attributes
+        self.is_ref: bool = is_ref  # this name is reference
 
 
 # CONCRETE CLASS
 class EXPRESSION_NUMBER_Node(EXPRESSION_SIMPLE_Node):
     parts = ("NUMBER",)  # Since it's a single unit in and of itself
 
-    def __init__(self, number_value=""):
+    def __init__(self, number_value: Token = Token()):
         super().__init__()
 
         # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
         self.name.append("NUMBER")
-        self.number_value = number_value  # Class-Object-specifics attributes
+        self.number_value: Token = number_value  # Class-Object-specifics attributes
 
 
 # CONCRETE CLASS
@@ -108,7 +108,11 @@ class EXPRESSION_ARRAY_SUBSCRIPTION_Node(EXPRESSION_SIMPLE_Node):
     parts = ("NAME", "[", "NON_NEGATIVE_INTEGER", "]")
 
     def __init__(
-        self, array_name=EXPRESSION_NAME_Node(), index=EXPRESSION_NUMBER_Node()
+        self,
+        array_name: EXPRESSION_NAME_Node = EXPRESSION_NAME_Node(),
+        left_square_bracket: Token = Token(),
+        index: Token = Token(),
+        right_square_bracket: Token = Token(),
     ):
         super().__init__()
 
@@ -116,7 +120,9 @@ class EXPRESSION_ARRAY_SUBSCRIPTION_Node(EXPRESSION_SIMPLE_Node):
         self.name.append("ARRAY_SUBSCRIPTION")
 
         self.array_name: EXPRESSION_NAME_Node = array_name
-        self.index = index
+        self.left_square_bracket: Token = left_square_bracket
+        self.index: Token = index
+        self.right_square_bracket: Token = right_square_bracket
 
 
 # TYPE CLASS
@@ -134,12 +140,12 @@ class EXPRESSION_LITERAL_Node(EXPRESSION_SIMPLE_Node):
 class EXPRESSION_STRING_Node(EXPRESSION_SIMPLE_Node):
     parts = ("STRING",)  # Since it's a single unit in and of itself
 
-    def __init__(self, string_value=""):
+    def __init__(self, string_value: Token = Token()):
         super().__init__()
 
         # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
         self.name.append("STRING")
-        self.string_value = string_value  # Class-Object-specifics attributes
+        self.string_value: Token = string_value  # Class-Object-specifics attributes
 
 
 # CONCRETE CLASS
@@ -164,7 +170,7 @@ class EXPRESSION_FUNCTION_CALL_Node(EXPRESSION_SIMPLE_Node):
 
     def __init__(
         self,
-        function_name=EXPRESSION_NAME_Node(),
+        function_name: EXPRESSION_NAME_Node = EXPRESSION_NAME_Node(),
         expressions_list: EXPRESSION_EXPRESSIONS_LIST_Node = EXPRESSION_EXPRESSIONS_LIST_Node(),
     ):
         super().__init__()
@@ -181,27 +187,36 @@ class EXPRESSION_FUNCTION_CALL_Node(EXPRESSION_SIMPLE_Node):
 class TYPE_Node(Syntax_Tree_Node):
     parts = ("const_var", "type_name", "ref_op")
 
-    def __init__(self, const_var="", type_name="", ref_op=""):
+    def __init__(
+        self,
+        const_var: Token = Token(),
+        type_name: Token = Token(),
+        ref_op: Token = Token(),
+    ):
         super().__init__()
         self.name.append("TYPE")
-        self.const_var = const_var
-        self.type_name = type_name
-        self.ref_op = ref_op
+        self.const_var: Token = const_var
+        self.type_name: Token = type_name
+        self.ref_op: Token = ref_op
 
 
 # CONCRETE CLASS
-class NAME_COLON_TYPE_Node(Syntax_Tree_Node):
-    parts = ("NAME", "COLON", "TYPE")
+class EXPRESSION_CONST_VAR_DEFINITION_BODY_Node(Syntax_Tree_Node):
+    parts = ("NAME", "COLON", "TYPE", ":=", "EXPRESSION")
 
     def __init__(
         self,
-        name_string=EXPRESSION_NAME_Node(),
+        name_string: EXPRESSION_NAME_Node = EXPRESSION_NAME_Node(),
+        colon=Token(),
         type_name=TYPE_Node(),
+        colon_equal: Token = Token(),
         expression=EXPRESSION_Node(),
     ):
         super().__init__()
         self.name_string: EXPRESSION_NAME_Node = name_string
+        self.colon: Token = colon
         self.type_name: TYPE_Node = type_name
+        self.colon_equal: Token = colon_equal
         self.expression: EXPRESSION_Node = expression
 
 
@@ -209,16 +224,22 @@ class NAME_COLON_TYPE_Node(Syntax_Tree_Node):
 class EXPRESSION_CONST_VAR_DEFINITION_Node(EXPRESSION_COMPOUND_Node):
     parts = ("define", "NAME", ":", "TYPE", ":=", "EXPRESSION")
 
-    def __init__(self, define=Token(), name_colon_type_list=None):
+    def __init__(
+        self,
+        define=Token(),
+        name_colon_type_list: List[EXPRESSION_CONST_VAR_DEFINITION_BODY_Node] = None,
+    ):
         if name_colon_type_list is None:
-            name_colon_type_list: List[NAME_COLON_TYPE_Node] = []
+            name_colon_type_list: List[EXPRESSION_CONST_VAR_DEFINITION_BODY_Node] = []
 
         self.define: Token = (
             define  # A helpful variable to track where this CONST_VAR_DEFINITION
         )
 
         # This variable contains all (NAME : TYPE) chucks of this CONST_VAR_DEFINITION
-        self.name_colon_type_list: List[NAME_COLON_TYPE_Node] = name_colon_type_list
+        self.name_colon_type_list: List[
+            EXPRESSION_CONST_VAR_DEFINITION_BODY_Node
+        ] = name_colon_type_list
 
 
 class Result:
@@ -237,7 +258,7 @@ class SyntaxAnalyzer:
         self.idx = 0
 
         # self.tok_obj.tokens_list[self.idx], current token
-        self.cur_tok: Union[Token, None] = self.tok_obj.tokens_list[self.idx]
+        self.cur_tok: Token = self.tok_obj.tokens_list[self.idx]
 
         # becomes True after analyze() successfully execute
         self.done = False
@@ -251,9 +272,9 @@ class SyntaxAnalyzer:
     def advance(self):
         self.idx += 1
         if self.idx < len(self):
-            self.cur_tok: Union[Token, None] = self[self.idx]
+            self.cur_tok: Token = self[self.idx]
         else:
-            self.cur_tok: Union[Token, None] = None
+            self.cur_tok: Token = None
         return self
 
     # EXPRESSION: NAME | LITERAL | FUNCTION_CALL | CONST_VAR_DEFINITION | ARRAY_SUBSCRIPTION
@@ -265,9 +286,12 @@ class SyntaxAnalyzer:
         # When calling this method, self.cur_tok.value must be "define"
         successful_definitions = 0
         res = [Result()]
-        tree_node = EXPRESSION_CONST_VAR_DEFINITION_Node(define=self[self.idx - 1])
+        tree_node = EXPRESSION_CONST_VAR_DEFINITION_Node(
+            define=self.cur_tok
+        )  # This node holds the current (CONST_VAR_DEFINITION) if any
+        self.advance()
         phase = "NAME"
-        is_ref = True
+        is_ref = False
         while self.cur_tok is not None:
             old_phase = phase
             if phase == "NAME":
@@ -278,6 +302,13 @@ class SyntaxAnalyzer:
                 ):
                     # NAME VALID
                     phase = ":"
+                    tree_node.name_colon_type_list.append(
+                        EXPRESSION_CONST_VAR_DEFINITION_BODY_Node(
+                            name_string=EXPRESSION_NAME_Node(
+                                name_string=self.cur_tok.value,
+                            )
+                        )
+                    )
                 else:
                     # NAME INVALID
                     ln = self.cur_tok.begin.ln
@@ -439,7 +470,7 @@ class SyntaxAnalyzer:
             elif phase == "EXPRESSION":
                 # Looking for an expression
                 expr_res = self.EXPRESSION()
-                if not expr_res.error:
+                if not expr_res[-1].error:
                     # FOUND A VALID EXPRESSION
                     phase = ",-;"
                 else:
@@ -503,7 +534,6 @@ class SyntaxAnalyzer:
         while self.cur_tok:
             if self.cur_tok.value == "define":
                 # CONST_VAR_DEFINITION
-                self.advance()
                 res = self.CONST_VAR_DEFINITION()
                 if res[-1].error:
                     print(res[-1].error)
