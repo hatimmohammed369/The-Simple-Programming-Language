@@ -4,44 +4,44 @@
 # () are used for grouping
 # anything between '' is denotes just itself, so '(' denotes an actual ( written in code
 
-KEYWORDS: 'define' | 'var' | 'const' | 'int' | 'real' | 'string' | 'bool' | 'not' | 'and' | 'or' | 'true' | 'false' | 'array' | 'ref_of' |
+KEYWORDS: 'define' | 'var' | 'const' | 'int' | 'float' | 'string' | 'bool' | 'not' | 'and' | 'or' | 'true' | 'false' | 'array' | 'ref_of' |
     'function' | 'return' | 'if' | 'else' | 'else_if' | 'for' | 'while' | 'break' | 'continue' | 'pass'
 
-STATEMENT: ( SMALL_STATEMENT | BLOCK_STATEMENT ) [ [';'] LINE_BREAK | ';' ]
+STATEMENT: ( SIMPLE_STATEMENT | COMPOUND_STATEMENT ) [ [';'] LINE_BREAK | ';' ]
 
-SMALL_STATEMENT: 'pass' | 'break' | 'continue' | RETURN_STATEMENT | OPERATOR_STATEMENT
+SIMPLE_STATEMENT: 'pass' | 'break' | 'continue' | RETURN_STATEMENT | OPERATOR_EXPRESSION
 
 RETURN_STATEMENT: 'return' EXPRESSION
 
-EXPRESSION: NAME | LITERAL | FUNCTION_CALL | CONST_VAR_DEFINITION | ARRAY_SUBSCRIPTION
+EXPRESSION: SIMPLE_EXPRESSION | COMPOUND_EXPRESSION
+
+SIMPLE_EXPRESSION: NAME | LITERAL
+
+COMPOUND_EXPRESSION: FUNCTION_CALL | CONST_VAR_DEFINITION | ARRAY_SUBSCRIPTION | OPERATOR_EXPRESSION
 
 ARRAY_SUBSCRIPTION: NAME '[' NON_NEGATIVE_INTEGER ']'
 
 LITERAL: NUMBER | STRING
 
-FUNCTION_CALL: NAME '(' EXPRESSIONS_LIST ')'
+FUNCTION_CALL: NAME '(' [ EXPRESSIONS_LIST ] ')'
 
 EXPRESSIONS_LIST: EXPRESSION ( ',' EXPRESSION )*
 
-OPERATOR_STATEMENT: EXPRESSION ( OPERATOR EXPRESSION )+
+OPERATOR_EXPRESSION: UNARY_OPERATOR SIMPLE_EXPRESSION | SIMPLE_EXPRESSION ( BINARY_OPERATOR SIMPLE_EXPRESSION )+
 
-OPERATOR: LOGICAL_OPERATOR | ARITHMETIC_OPERATOR | ASSIGNMENT_OPERATOR 
+UNARY_OPERATOR: '-' | '++' | '--' | '~'
 
-LOGICAL_OPERATOR: '==' | '!=' | '<' | '<=' | '>' | '>=' | 'not' | 'and' | 'or'
-
-ARITHMETIC_OPERATOR: '+' | '-' | '*' | '/' | '++' | '--'
-
-ASSIGNMENT_OPERATOR: ':=' | '=' | '+=' | '-=' | '*=' | '/=' | '~=' | '&=' | '|=' | '^=' | '>>=' | '<<='
+BINARY_OPERATOR: '==' | '!=' | '<' | '<=' | '>' | '>=' | 'not' | 'and' | 'or' | '+' | '-' | '*' | '/' ':=' | '=' | '+=' | '-=' | '*=' | '/=' | '~=' | '&=' | '|=' | '^=' | '>>=' | '<<='
 
 CONST_VAR_DEFINITION: 'define' (NAME ':' TYPE ':=' EXPRESSION)+
 
 TYPE: [ 'const' | 'var' ] ( USER_DEFINED_TYPE | PRIMITIVE_DATA_TYPE ) [ '&' ]
 
-PRIMITIVE_DATA_TYPE: 'int' | 'real' | 'string' | 'bool' | ARRAY_TYPE
+PRIMITIVE_DATA_TYPE: 'int' | 'float' | 'string' | 'bool' | ARRAY_TYPE
 
 ARRAY_TYPE: 'array' [ '[' NON_NEGATIVE_INTEGER ':' TYPE ']' ]
 
-BLOCK_STATEMENT: FUNCTION_STATEMENT | IF_STATEMENT | FOR_STATEMENT | WHILE_STATEMENT
+COMPOUND_STATEMENT: FUNCTION_STATEMENT | IF_STATEMENT | FOR_STATEMENT | WHILE_STATEMENT
 
 FUNCTION_STATEMENT: 'function' NAME '(' PARAMETERS_LIST ')' [ ':' TYPE ] BLOCK END_STATEMENT
 
