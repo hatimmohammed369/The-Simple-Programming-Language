@@ -1,5 +1,5 @@
 from tokenizer import *
-from typing import Union, List, Dict
+from typing import List
 
 # BASE CLASS
 class Syntax_Tree_Node:
@@ -270,28 +270,27 @@ class SyntaxAnalyzer:
         return self.tok_obj.tokens_list[key]
 
     def advance(self):
-        self.idx += 1
+        if self.idx <= len(self):
+            self.idx += 1
+
         if self.idx < len(self):
             self.cur_tok: Token = self[self.idx]
         else:
             self.cur_tok: Token = None
         return self
 
-    # EXPRESSION: NAME | LITERAL | FUNCTION_CALL | CONST_VAR_DEFINITION | ARRAY_SUBSCRIPTION
     def EXPRESSION(self) -> List[Result]:
         res = [Result()]
         return res
 
     def CONST_VAR_DEFINITION(self) -> List[Result]:
         # When calling this method, self.cur_tok.value must be "define"
-        successful_definitions = 0
         res = [Result()]
         tree_node = EXPRESSION_CONST_VAR_DEFINITION_Node(
             define=self.cur_tok
         )  # This node holds the current (CONST_VAR_DEFINITION) if any
         self.advance()
         phase = "NAME"
-        is_ref = False
         while self.cur_tok is not None:
             old_phase = phase
             if phase == "NAME":
@@ -302,32 +301,28 @@ class SyntaxAnalyzer:
                 ):
                     # NAME VALID
                     phase = ":"
-                    tree_node.name_colon_type_list.append(
-                        EXPRESSION_CONST_VAR_DEFINITION_BODY_Node(
-                            name_string=EXPRESSION_NAME_Node(
-                                name_string=self.cur_tok.value,
+                    tree_node.name_colon_type_list.append(  # Constructing this CONST_VAR_DEFINITION
+                        EXPRESSION_CONST_VAR_DEFINITION_BODY_Node(  # Create a new (NAME : TYPE := EXPRESSION) object
+                            name_string=EXPRESSION_NAME_Node(  # Setting the name part with this name we just found, namely self.cur_tok.value
+                                name_string=self.cur_tok,  # the actual name, which is Token
                             )
                         )
                     )
                 else:
                     # NAME INVALID
                     ln = self.cur_tok.begin.ln
-                    res.append(
-                        Result(
-                            error=f"Syntax Error in line {ln + 1}:\n"
-                            + "    "
-                            + self.tok_obj.lines[ln].value
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + "^" * len(self.cur_tok.value)
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + f"Expected a valid variable/constant name, "
-                            + "but found '{self.cur_tok.value}'",
-                            astNode=None,
-                        )
+                    res[0] = Result(
+                        error=f"Syntax Error in line {ln + 1}:\n"
+                        + "    "
+                        + self.tok_obj.lines[ln].value
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + "^" * len(self.cur_tok.value)
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + f"Expected a valid variable/constant name, "
+                        + "but found '{self.cur_tok.value}'",
+                        astNode=None,
                     )
                     break
 
@@ -336,24 +331,23 @@ class SyntaxAnalyzer:
                 if self.cur_tok.value == ":":
                     # FOUND :
                     phase = "const-var"
+                    tree_node.name_colon_type_list[
+                        -1
+                    ].colon = self.cur_tok  # the : in (NAME : TYPE := EXPRESSION)
                 else:
                     # FOUND NO :
                     ln = self.cur_tok.begin.ln
-                    res.append(
-                        Result(
-                            error=f"Syntax Error in line {ln + 1}:\n"
-                            + "    "
-                            + self.tok_obj.lines[ln].value
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + "^" * len(self.cur_tok.value)
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + f"Expected a single colon (:), but found '{self.cur_tok.value}'",
-                            astNode=None,
-                        )
+                    res[0] = Result(
+                        error=f"Syntax Error in line {ln + 1}:\n"
+                        + "    "
+                        + self.tok_obj.lines[ln].value
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + "^" * len(self.cur_tok.value)
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + f"Expected a single colon (:), but found '{self.cur_tok.value}'",
+                        astNode=None,
                     )
                     break
 
@@ -362,25 +356,24 @@ class SyntaxAnalyzer:
                 if self.cur_tok.value in ("const", "var"):
                     # FOUND const/var
                     phase = "TYPE_NAME"
+                    tree_node.name_colon_type_list[-1].type_name = TYPE_Node(
+                        const_var=self.cur_tok  # the const/var in (NAME : const int := EXPRESSION) for instance
+                    )
                 else:
                     # FOUND NO const/var
                     ln = self.cur_tok.begin.ln
-                    res.append(
-                        Result(
-                            error=f"Syntax Error in line {ln + 1}:\n"
-                            + "    "
-                            + self.tok_obj.lines[ln].value
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + "^" * len(self.cur_tok.value)
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + f"Expected either lowercase (const) or lowercase (var), "
-                            + "but found neither, actually found '{self.cur_tok.value}'",
-                            astNode=None,
-                        )
+                    res[0] = Result(
+                        error=f"Syntax Error in line {ln + 1}:\n"
+                        + "    "
+                        + self.tok_obj.lines[ln].value
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + "^" * len(self.cur_tok.value)
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + f"Expected either lowercase (const) or lowercase (var), "
+                        + "but found neither, actually found '{self.cur_tok.value}'",
+                        astNode=None,
                     )
                     break
 
@@ -389,24 +382,25 @@ class SyntaxAnalyzer:
                 if self.cur_tok.value in PRIMITIVE_DATA_TYPES:
                     # FOUND A VALID TYPE_NAME
                     phase = "&"
+                    tree_node.name_colon_type_list[
+                        -1
+                    ].type_name.type_name = (
+                        self.cur_tok
+                    )  # the type name in (x: const int := -2834745) for instance
                 else:
                     # FOUND NO VALID TYPE_NAME
                     ln = self.cur_tok.begin.ln
-                    res.append(
-                        Result(
-                            error=f"Syntax Error in line {ln + 1}:\n"
-                            + "    "
-                            + self.tok_obj.lines[ln].value
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + "^" * len(self.cur_tok.value)
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + f"No type with name '{self.cur_tok.value}'",
-                            astNode=None,
-                        )
+                    res[0] = Result(
+                        error=f"Syntax Error in line {ln + 1}:\n"
+                        + "    "
+                        + self.tok_obj.lines[ln].value
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + "^" * len(self.cur_tok.value)
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + f"No type with name '{self.cur_tok.value}'",
+                        astNode=None,
                     )
                     break
 
@@ -414,30 +408,31 @@ class SyntaxAnalyzer:
                 # Looking for the (optional) reference & operator
                 if self.cur_tok.value == "&":
                     # FOUND &
-                    is_ref = True
+                    # This name is a reference
                     phase = ":="
+                    tree_node.name_colon_type_list[
+                        -1
+                    ].name_string.is_ref = True  # This name is indeed a reference
                 elif self.cur_tok.value == ":=":
-                    is_ref = False
                     phase = "EXPRESSION"
+                    tree_node.name_colon_type_list[
+                        -1
+                    ].name_string.is_ref = False  # Just for clarification
                 else:
                     # FOUND NEITHER & or :=
                     ln = self.cur_tok.begin.ln
-                    res.append(
-                        Result(
-                            error=f"Syntax Error in line {ln + 1}:\n"
-                            + "    "
-                            + self.tok_obj.lines[ln].value
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + "^" * len(self.cur_tok.value)
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + f"Expected either & (for references) or := (for definition assignment), "
-                            + "but found neither, actually found '{self.cur_tok.value}'",
-                            astNode=None,
-                        )
+                    res[0] = Result(
+                        error=f"Syntax Error in line {ln + 1}:\n"
+                        + "    "
+                        + self.tok_obj.lines[ln].value
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + "^" * len(self.cur_tok.value)
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + f"Expected either & (for references) or := (for definition assignment), "
+                        + "but found neither, actually found '{self.cur_tok.value}'",
+                        astNode=None,
                     )
                     break
 
@@ -446,52 +441,54 @@ class SyntaxAnalyzer:
                 if self.cur_tok.value == ":=":
                     # FOUND :=
                     phase = "EXPRESSION"
+                    tree_node.name_colon_type_list[
+                        -1
+                    ].colon_equal = (
+                        self.cur_tok
+                    )  # The := in (NAME : TYPE := EXPRESSION)
                 else:
                     # FOUND NO :=
                     ln = self.cur_tok.begin.ln
-                    res.append(
-                        Result(
-                            error=f"Syntax Error in line {ln + 1}:\n"
-                            + "    "
-                            + self.tok_obj.lines[ln].value
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + "^" * len(self.cur_tok.value)
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + f"Expected :=, but found '{self.cur_tok.value}'",
-                            astNode=None,
-                        )
+                    res[0] = Result(
+                        error=f"Syntax Error in line {ln + 1}:\n"
+                        + "    "
+                        + self.tok_obj.lines[ln].value
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + "^" * len(self.cur_tok.value)
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + f"Expected :=, but found '{self.cur_tok.value}'",
+                        astNode=None,
                     )
                     break
 
             elif phase == "EXPRESSION":
                 # Looking for an expression
-                expr_res = self.EXPRESSION()
-                if not expr_res[-1].error:
+                # expr_res = self.EXPRESSION()
+                if NUMBER_PATTERN.fullmatch(
+                    self.cur_tok.value
+                ):  # For simplicity use numbers, for now
                     # FOUND A VALID EXPRESSION
                     phase = ",-;"
+                    tree_node.name_colon_type_list[
+                        -1
+                    ].expression = EXPRESSION_NUMBER_Node(number_value=self.cur_tok)
                 else:
                     # FOUND NO VALID EXPRESSION
                     ln = self.cur_tok.begin.ln
-                    res.append(
-                        Result(
-                            error=f"Syntax Error in line {ln + 1}:\n"
-                            + "    "
-                            + self.tok_obj.lines[ln].value
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + "^" * len(self.cur_tok.value)
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + f"Expected an expression (variable, constant, number, string, array expression), "
-                            + "but found '{self.cur_tok.value}'",
-                            astNode=None,
-                        )
+                    res[0] = Result(
+                        error=f"Syntax Error in line {ln + 1}:\n"
+                        + "    "
+                        + self.tok_obj.lines[ln].value
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + "^" * len(self.cur_tok.value)
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + f"Expected an expression (variable, constant, number, string, array expression), "
+                        + "but found '{self.cur_tok.value}'",
+                        astNode=None,
                     )
                     break
 
@@ -503,26 +500,21 @@ class SyntaxAnalyzer:
                 elif self.cur_tok.value == ",":
                     # Successful definition was done
                     # There is another definition coming on the way!
-                    successful_definitions += 1
                     phase = "NAME"
                 else:
                     # FOUND NEITHER (,) nor (;)
                     ln = self.cur_tok.begin.ln
-                    res.append(
-                        Result(
-                            error=f"Syntax Error in line {ln + 1}:\n"
-                            + "    "
-                            + self.tok_obj.lines[ln].value
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + "^" * len(self.cur_tok.value)
-                            + "\n"
-                            + " "
-                            * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + f"Expected either , (comma) or ; (semi-colon), but found neither, actually found '{self.cur_tok.value}'",
-                            astNode=None,
-                        )
+                    res[0] = Result(
+                        error=f"Syntax Error in line {ln + 1}:\n"
+                        + "    "
+                        + self.tok_obj.lines[ln].value
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + "^" * len(self.cur_tok.value)
+                        + "\n"
+                        + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
+                        + f"Expected either , (comma) or ; (semi-colon), but found neither, actually found '{self.cur_tok.value}'",
+                        astNode=None,
                     )
                     break
 
@@ -531,13 +523,16 @@ class SyntaxAnalyzer:
         return res
 
     def analyze(self):
-        while self.cur_tok:
+        while self.cur_tok is not None:
             if self.cur_tok.value == "define":
                 # CONST_VAR_DEFINITION
                 res = self.CONST_VAR_DEFINITION()
                 if res[-1].error:
                     print(res[-1].error)
                     exit(0)
+            self.advance()  # added this because code was stuck in a loop
+            # Even thought things are OK
+            # we need self.cur_tok as None to break out of this while
         self.done = True
         return self
 
