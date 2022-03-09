@@ -1,14 +1,15 @@
 from tokenizer import *
-from typing import Union, List
-from dataclasses import dataclass
+from typing import Union, List, Dict
 
-
+# BASE CLASS
 class Syntax_Tree_Node:
     def __init__(self):
         self.name: List[str] = []  # FORMAL_GRAMMAR entry hierarchy
         # something like: ["EXPRESSION", "SIMPLE_EXPRESSION", "NAME"]
         # Last element in self.name represents the FORMAL_GRAMMAR name of this object
 
+
+# end class Syntax_Tree_Node
 
 # EXPRESSION: SIMPLE_EXPRESSION | COMPOUND_EXPRESSION
 #
@@ -34,7 +35,7 @@ class EXPRESSION_Node(Syntax_Tree_Node):
         "COMPOUND_EXPRESSION",
     )
 
-    def __init__(self, type_name=""):
+    def __init__(self):
         super().__init__()
 
         # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
@@ -45,7 +46,7 @@ class EXPRESSION_Node(Syntax_Tree_Node):
 class EXPRESSION_SIMPLE_Node(EXPRESSION_Node):
     types = ("NAME", "LITERAL")
 
-    def __init__(self, type_name=""):
+    def __init__(self):
         super().__init__()
 
         # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
@@ -61,7 +62,7 @@ class EXPRESSION_COMPOUND_Node(EXPRESSION_Node):
         "OPERATOR_EXPRESSION",
     )
 
-    def __init__(self, type_name=""):
+    def __init__(self):
         super().__init__()
 
         # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
@@ -72,52 +73,22 @@ class EXPRESSION_COMPOUND_Node(EXPRESSION_Node):
 # FORMAL_GRAMMAR units with no types have no class attribute (type), instead they have class attribute (parts)
 # AND also they have special instance attributes which vary between different classes
 # For instance, object attributes of ARRAY_SUBSCRIPTION will not be the same as EXPRESSIONS_LIST
+#
+# All data validation is done in code creating _Node objects
 # <====================================================================================================>
-
-
-# CONCRETE CLASS
-class EXPRESSION_ARRAY_SUBSCRIPTION_Node(EXPRESSION_SIMPLE_Node):
-    parts = ("NAME", "[", "NON_NEGATIVE_INTEGER", "]")
-
-    def __init__(self, array_name="", non_negative_integer=0):
-        super().__init__()
-
-        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
-        self.name.append("ARRAY_SUBSCRIPTION")
-
-        if non_negative_integer < 0:
-            raise ValueError(f"{non_negative_integer} is less than 0")
-        else:
-            self.array_name = array_name
-            self.non_negative_integer = non_negative_integer
 
 
 # CONCRETE CLASS
 class EXPRESSION_NAME_Node(EXPRESSION_SIMPLE_Node):
     parts = ("NAME",)  # Since it's a single unit in and of itself
 
-    def __init__(self, name_string=""):
+    def __init__(self, name_string="", is_ref: bool = False):
         super().__init__()
 
         # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
         self.name.append("NAME")
         self.name_string = name_string  # Class-Object-specifics attributes
-
-
-# TYPE CLASS
-class EXPRESSION_LITERAL_Node(EXPRESSION_SIMPLE_Node):
-    types = ("NUMBER", "STRING")
-
-    def __init__(self, type_name=""):
-        super().__init__()
-
-        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
-        self.name.append("LITERAL")
-
-        # this (type_name) must be EXPRESSION_Node.types
-        # This EXPRESSION_LITERAL_Node object must have a type
-        # and this type must be in EXPRESSION_LITERAL_Node.types tuple defined above
-        self.type_name = type_name
+        self.is_ref = is_ref  # this name is reference
 
 
 # CONCRETE CLASS
@@ -129,9 +100,34 @@ class EXPRESSION_NUMBER_Node(EXPRESSION_SIMPLE_Node):
 
         # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
         self.name.append("NUMBER")
-        if not NUMBER_PATTERN.fullmatch(number_value):
-            raise ValueError(f"{number_value} is not a valid numeric literal")
         self.number_value = number_value  # Class-Object-specifics attributes
+
+
+# CONCRETE CLASS
+class EXPRESSION_ARRAY_SUBSCRIPTION_Node(EXPRESSION_SIMPLE_Node):
+    parts = ("NAME", "[", "NON_NEGATIVE_INTEGER", "]")
+
+    def __init__(
+        self, array_name=EXPRESSION_NAME_Node(), index=EXPRESSION_NUMBER_Node()
+    ):
+        super().__init__()
+
+        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
+        self.name.append("ARRAY_SUBSCRIPTION")
+
+        self.array_name: EXPRESSION_NAME_Node = array_name
+        self.index = index
+
+
+# TYPE CLASS
+class EXPRESSION_LITERAL_Node(EXPRESSION_SIMPLE_Node):
+    types = ("NUMBER", "STRING")
+
+    def __init__(self):
+        super().__init__()
+
+        # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
+        self.name.append("LITERAL")
 
 
 # CONCRETE CLASS
@@ -167,18 +163,62 @@ class EXPRESSION_FUNCTION_CALL_Node(EXPRESSION_SIMPLE_Node):
     parts = ("NAME", "EXPRESSIONS_LIST")
 
     def __init__(
-        self, function_name="", expressions_list: List[EXPRESSION_Node] = None
+        self,
+        function_name=EXPRESSION_NAME_Node(),
+        expressions_list: EXPRESSION_EXPRESSIONS_LIST_Node = EXPRESSION_EXPRESSIONS_LIST_Node(),
     ):
         super().__init__()
-        if expressions_list is None:
-            expressions_list: List[EXPRESSION_Node] = []
 
         # Last element in this list tells us exactly which FORMAL_GRAMMAR unit this object is
         self.name.append("FUNCTION_CALL")
-        self.expressions_list: List[
-            EXPRESSION_Node
-        ] = expressions_list  # Class-Object-specifics attributes
-        self.function_name = function_name
+        self.expressions_list: EXPRESSION_EXPRESSIONS_LIST_Node = (
+            expressions_list  # Class-Object-specifics attributes
+        )
+        self.function_name: EXPRESSION_NAME_Node = function_name
+
+
+# CONCRETE CLASS
+class TYPE_Node(Syntax_Tree_Node):
+    parts = ("const_var", "type_name", "ref_op")
+
+    def __init__(self, const_var="", type_name="", ref_op=""):
+        super().__init__()
+        self.name.append("TYPE")
+        self.const_var = const_var
+        self.type_name = type_name
+        self.ref_op = ref_op
+
+
+# CONCRETE CLASS
+class NAME_COLON_TYPE_Node(Syntax_Tree_Node):
+    parts = ("NAME", "COLON", "TYPE")
+
+    def __init__(
+        self,
+        name_string=EXPRESSION_NAME_Node(),
+        type_name=TYPE_Node(),
+        expression=EXPRESSION_Node(),
+    ):
+        super().__init__()
+        self.name_string: EXPRESSION_NAME_Node = name_string
+        self.type_name: TYPE_Node = type_name
+        self.expression: EXPRESSION_Node = expression
+
+
+# CONCRETE CLASS
+class EXPRESSION_CONST_VAR_DEFINITION_Node(EXPRESSION_COMPOUND_Node):
+    parts = ("define", "NAME", ":", "TYPE", ":=", "EXPRESSION")
+
+    def __init__(self, define=Token(), name_colon_type_list=None):
+        if name_colon_type_list is None:
+            name_colon_type_list: List[NAME_COLON_TYPE_Node] = []
+
+        self.define: Token = (
+            define  # A helpful variable to track where this CONST_VAR_DEFINITION
+        )
+
+        # This variable contains all (NAME : TYPE) chucks of this CONST_VAR_DEFINITION
+        self.name_colon_type_list: List[NAME_COLON_TYPE_Node] = name_colon_type_list
 
 
 class Result:
@@ -222,13 +262,12 @@ class SyntaxAnalyzer:
         return res
 
     def CONST_VAR_DEFINITION(self) -> List[Result]:
+        # When calling this method, self.cur_tok.value must be "define"
         successful_definitions = 0
         res = [Result()]
+        tree_node = EXPRESSION_CONST_VAR_DEFINITION_Node(define=self[self.idx - 1])
         phase = "NAME"
-        is_ref = False  # If current definition is making a reference
-        refs = (
-            {}
-        )  # In case we find multiple definitions, this dict records which variables/constants are references
+        is_ref = True
         while self.cur_tok is not None:
             old_phase = phase
             if phase == "NAME":
@@ -254,7 +293,8 @@ class SyntaxAnalyzer:
                             + "\n"
                             + " "
                             * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + f"Expected a valid variable/constant name, but found '{self.cur_tok.value}'",
+                            + f"Expected a valid variable/constant name, "
+                            + "but found '{self.cur_tok.value}'",
                             astNode=None,
                         )
                     )
@@ -417,7 +457,8 @@ class SyntaxAnalyzer:
                             + "\n"
                             + " "
                             * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                            + f"Expected an expression (variable, constant, number, string, array expression), but found '{self.cur_tok.value}'",
+                            + f"Expected an expression (variable, constant, number, string, array expression), "
+                            + "but found '{self.cur_tok.value}'",
                             astNode=None,
                         )
                     )
@@ -464,8 +505,8 @@ class SyntaxAnalyzer:
                 # CONST_VAR_DEFINITION
                 self.advance()
                 res = self.CONST_VAR_DEFINITION()
-                if res.error:
-                    print(res.error)
+                if res[-1].error:
+                    print(res[-1].error)
                     exit(0)
         self.done = True
         return self
