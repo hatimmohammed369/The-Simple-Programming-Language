@@ -1,1 +1,3 @@
 Make a Regular-Expression-like mechanism to detect valid Grammar units
+
+So we move through tokens and call these functions with Grammar units names which either give the relevant syntax tree nodes or report appropriate errors
