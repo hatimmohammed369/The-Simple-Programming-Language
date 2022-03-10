@@ -1,8 +1,12 @@
+from dataclasses import dataclass
+from typing import Any
+
 # KEYWORDS / OPERATORS / ...
 # You know, those sorts of things
 import re
 
 KEYWORDS = (
+    "define",
     "var",
     "const",
     "int",
@@ -144,3 +148,13 @@ SEPARATOR_PATTERN = re.compile(
 ARRAY_TYPE_PATTERN = re.compile(
     rf"array\[{INT_PATTERN.pattern}:{NAME_PATTERN.pattern}]"
 )
+
+
+@dataclass(init=True, repr=True)
+class Result:
+    """
+    A general wrapper class used as return for operation which may fail
+    """
+
+    error_msg: str = ""  # Error message on failure
+    result = object()  # resulting object on success
