@@ -1,5 +1,7 @@
+#!/usr/local/bin/python3.10
+
 import re
-from typing import Any, Union
+from typing import Any
 from dataclasses import dataclass
 from const import *
 
@@ -37,8 +39,23 @@ class Token:
     __str__ = __repr__
 
 
+class Tokenizer_Result(Result):
+    def __init__(self, error_msg: str = "", token: Token = Token()):
+        super().__init__()
+        self.error_msg: str = error_msg
+        self.result: Token = token
+
+
 class Tokenizer:
-    def __init__(self, text: str):
+    def __init__(
+        self,
+        text: str,  # Text to be tokenized
+        indent_type="s",  # which character to use for indentation,
+        # if indent_type.lower() == "s" then we use spaces for indentation
+        # if indent_type.lower() == "t" then we use tabs for indentation
+        indent_size=4,  # How many indent characters in a single indent token
+        tab_size=4,  # How many spaces in a single tab
+    ):
         self.text: str = text
         self.current_char: str = ""
         self.idx, self.ln, self.col = 0, 0, 0
@@ -50,6 +67,13 @@ class Tokenizer:
         self.checked_indent = False
         self.lines: dict[int, Line] = {}
         self.last_line_break_index = -1
+
+        self.indent_type: str = indent_type.lower()
+        if self.indent_type not in (" ", "\t"):
+            raise ValueError(f'{self.indent_type} must be either " " or "\\t"')
+        self.indent_size = indent_size
+        self.tab_size = tab_size
+
         self.done = False  # becomes True after this instance calls method tokenize()
 
     def pos(self):
@@ -86,7 +110,7 @@ class Tokenizer:
             self.col += steps
         return self
 
-    def next_token(self) -> Union[Token, None]:
+    def next_token(self) -> Token:
         token = None
         steps = 1
         if self.current_char != "":  # it is not EOF
@@ -233,25 +257,60 @@ class Tokenizer:
                     # this line contains some non-whitespaces
                     first_non_white_space = first_non_white_space.start()
                     captured_indent = self.text[self.idx : first_non_white_space]
-                    captured_indent = captured_indent.replace("\t", " " * 4)
                     error = ""
 
                     # Error Handling
-                    if len(captured_indent) % 4 != 0:
-                        # Syntax Error: Indentation must a multiple of 4
-                        error += f"In line {self.ln + 1}, you have a Syntax Error: Indentation must be a multiple of 4\n"
-                        error += current_line + "\n"
-                        error += (
-                            "^" * len(captured_indent)
-                            + f" Indent of {len(captured_indent)} spaces"
-                        )
-                    captured_indent_level = len(captured_indent) // 4
-                    if " " in captured_indent and "\t" in captured_indent:
+
+                    # Make sure this indentation is spaces only to tabs only not a mix of spaces and tabs
+                    if (
+                        " " in captured_indent
+                        and "\t" in captured_indent
+                        and self.ln != 0
+                    ):
                         # Syntax Error: Mixing spaces and tabs in indentation
-                        error += f"Line {self.ln + 1}:\n"
-                        error += current_line + "\n"
-                        error += "^" * len(captured_indent) + "\n"
-                        error += "Syntax Error: Mixing spaces and tabs in indentation"
+                        error += f"Syntax Error in line {self.ln + 1}: Mixing spaces and tabs in indentation\n"
+
+                        error += "\n"
+                        for c in captured_indent:
+                            if c == "\t":
+                                error += "+" * self.tab_size
+                            else:
+                                error += "*"
+                        error += current_line[len(captured_indent) :] + "\n"
+
+                    if error:
+                        # Add explanatory tips
+                        indent_name = "Spaces" if self.indent_type == " " else "Tabs"
+                        tips = (
+                            f"Indent type: {indent_name}\n"
+                            + f"Indent Size: {self.indent_size} {indent_name}\n"
+                            + f"Tab Size:    {self.tab_size} Spaces\n"
+                            + f"+ = one space | * = one tab | "
+                            + f"{'+' * self.tab_size} = one tab converted to spaces ({self.tab_size} {indent_name})\n"
+                        )
+                        tips += "<======================================================================>\n"
+                        error = tips + error
+
+                    # This line below must be here, because replacing all tabs with (self.tab_size) spaces
+                    # will never trigger above if which reports mixing tabs and spaces
+                    captured_indent = captured_indent.replace("\t", " " * self.tab_size)
+
+                    # Make sure this indentation is uniform
+                    if len(captured_indent) % self.indent_size != 0 and self.ln != 0:
+                        # Syntax Error: Indentation must a multiple of (self.indent_size)
+                        error += "<======================================================================>"
+                        error += "\n"
+
+                        error += f"Syntax Error in line {self.ln + 1}: Indentation must be a multiple of {self.indent_size}"
+                        error += "\n\n"
+
+                        error += ("+" if self.indent_type == " " else "*") * len(
+                            captured_indent.replace("\t", " " * self.tab_size)
+                        )
+                        error += current_line[len(captured_indent) :] + "\n\n"
+                        error += f"Found indent of {len(captured_indent)} {'spaces' if self.indent_type == ' ' else 'tabs'}\n"
+
+                    captured_indent_level = len(captured_indent) // 4
                     if self.ln == 0 and len(captured_indent) != 0:
                         # if it is first line, this is Syntax Error
                         if len(error) == 0:
@@ -293,15 +352,12 @@ class Tokenizer:
                         if token is not None:
                             # dont add indent/outdent token if it has no name, this means there's no indent or outdent
                             self.tokens_list.append(token)
-
-                    if error == "":
-                        error = None
             else:
                 self.next_token()
             #
             #
-            if error is not None:
-                print("\nError:\n" + error)
+            if error:
+                print(error)
                 exit(0)
         # end "while self.current_char != "" "
         self.done = True
@@ -311,3 +367,54 @@ class Tokenizer:
         if self.done is False:
             self.tokenize()
         return iter(self.tokens_list)
+
+
+if __name__ == "__main__":
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+
+    parser.add_argument("-s", "--source", help="A small code sample to execute")
+    parser.add_argument("-f", "--file", help="Source file")
+    parser.add_argument(
+        "--indent_type",
+        help="Indent type, use (s) or (S) for spaces, (t) or (T) for tabs",
+        default="s",
+    )
+    parser.add_argument(
+        "--indent_size", help="Indent size", default=4
+    )  # this means one indent token equals 4 spaces/tabs
+    parser.add_argument("--tab_size", help="Tab size in spaces", default=4)
+
+    args = parser.parse_args()
+
+    # Source code
+    if args.file:
+        with open(args.file, "r") as source_file:
+            source = str(source_file.read())
+    else:
+        source = args.source
+
+    # Tab size
+    if args.tab_size:
+        tab = args.tab_size
+    else:
+        tab = 4
+
+    # Indent type
+    if args.indent_type:
+        indent = " " if args.indent_type.lower() == "s" else "\t"
+    else:
+        indent = " "
+
+    # Indent size
+    if args.indent_size:
+        size = args.indent_size
+    else:
+        size = 4
+
+    tokenizer = Tokenizer(
+        text=source, indent_type=indent, indent_size=size, tab_size=tab
+    )
+    for token in tokenizer:
+        print(token)
