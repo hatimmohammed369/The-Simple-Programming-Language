@@ -157,4 +157,6 @@ class Result:
     """
 
     error_msg: str = ""  # Error message on failure
-    result = object()  # resulting object on success
+    result = object()  # resulting object
+    # Instead of returning (result) only on success,
+    # having it on failure is also valuable since we can diagnose the source of error use the invalid (result)

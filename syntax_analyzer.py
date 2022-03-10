@@ -9,7 +9,14 @@ class Syntax_Tree_Node:
         # Last element in self.name represents the FORMAL_GRAMMAR name of this object
 
 
-# end class Syntax_Tree_Node
+class Syntax_Result(Result):
+    def __init__(
+        self, error_msg: str = "", ast_node: Syntax_Tree_Node = Syntax_Tree_Node()
+    ):
+        super().__init__()
+        self.error_msg: str = error_msg
+        self.result: Syntax_Tree_Node = ast_node
+
 
 # EXPRESSION: SIMPLE_EXPRESSION | COMPOUND_EXPRESSION
 #
@@ -242,12 +249,6 @@ class EXPRESSION_CONST_VAR_DEFINITION_Node(EXPRESSION_COMPOUND_Node):
         ] = name_colon_type_list
 
 
-class Result:
-    def __init__(self, error: str = "", astNode: Syntax_Tree_Node = Syntax_Tree_Node()):
-        self.error = error
-        self.ast_node = astNode
-
-
 class SyntaxAnalyzer:
     def __init__(self, tokenizer_object: Tokenizer):
         self.tok_obj = tokenizer_object
@@ -279,13 +280,13 @@ class SyntaxAnalyzer:
             self.cur_tok: Token = None
         return self
 
-    def EXPRESSION(self) -> List[Result]:
-        res = [Result()]
+    def EXPRESSION(self) -> List[Syntax_Result]:
+        res = [Syntax_Result()]
         return res
 
-    def CONST_VAR_DEFINITION(self) -> List[Result]:
+    def CONST_VAR_DEFINITION(self) -> List[Syntax_Result]:
         # When calling this method, self.cur_tok.value must be "define"
-        res = [Result()]
+        res = [Syntax_Result()]
         tree_node = EXPRESSION_CONST_VAR_DEFINITION_Node(
             define=self.cur_tok
         )  # This node holds the current (CONST_VAR_DEFINITION) if any
@@ -311,8 +312,8 @@ class SyntaxAnalyzer:
                 else:
                     # NAME INVALID
                     ln = self.cur_tok.begin.ln
-                    res[0] = Result(
-                        error=f"Syntax Error in line {ln + 1}:\n"
+                    res[0] = Syntax_Result(
+                        error_msg=f"Syntax Error in line {ln + 1}:\n"
                         + "    "
                         + self.tok_obj.lines[ln].value
                         + "\n"
@@ -322,7 +323,7 @@ class SyntaxAnalyzer:
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
                         + f"Expected a valid variable/constant name, "
                         + "but found '{self.cur_tok.value}'",
-                        astNode=None,
+                        ast_node=tree_node,
                     )
                     break
 
@@ -337,8 +338,8 @@ class SyntaxAnalyzer:
                 else:
                     # FOUND NO :
                     ln = self.cur_tok.begin.ln
-                    res[0] = Result(
-                        error=f"Syntax Error in line {ln + 1}:\n"
+                    res[0] = Syntax_Result(
+                        error_msg=f"Syntax Error in line {ln + 1}:\n"
                         + "    "
                         + self.tok_obj.lines[ln].value
                         + "\n"
@@ -347,7 +348,7 @@ class SyntaxAnalyzer:
                         + "\n"
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
                         + f"Expected a single colon (:), but found '{self.cur_tok.value}'",
-                        astNode=None,
+                        ast_node=tree_node,
                     )
                     break
 
@@ -362,8 +363,8 @@ class SyntaxAnalyzer:
                 else:
                     # FOUND NO const/var
                     ln = self.cur_tok.begin.ln
-                    res[0] = Result(
-                        error=f"Syntax Error in line {ln + 1}:\n"
+                    res[0] = Syntax_Result(
+                        error_msg=f"Syntax Error in line {ln + 1}:\n"
                         + "    "
                         + self.tok_obj.lines[ln].value
                         + "\n"
@@ -373,7 +374,7 @@ class SyntaxAnalyzer:
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
                         + f"Expected either lowercase (const) or lowercase (var), "
                         + "but found neither, actually found '{self.cur_tok.value}'",
-                        astNode=None,
+                        ast_node=tree_node,
                     )
                     break
 
@@ -390,8 +391,8 @@ class SyntaxAnalyzer:
                 else:
                     # FOUND NO VALID TYPE_NAME
                     ln = self.cur_tok.begin.ln
-                    res[0] = Result(
-                        error=f"Syntax Error in line {ln + 1}:\n"
+                    res[0] = Syntax_Result(
+                        error_msg=f"Syntax Error in line {ln + 1}:\n"
                         + "    "
                         + self.tok_obj.lines[ln].value
                         + "\n"
@@ -400,7 +401,7 @@ class SyntaxAnalyzer:
                         + "\n"
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
                         + f"No type with name '{self.cur_tok.value}'",
-                        astNode=None,
+                        ast_node=tree_node,
                     )
                     break
 
@@ -421,8 +422,8 @@ class SyntaxAnalyzer:
                 else:
                     # FOUND NEITHER & or :=
                     ln = self.cur_tok.begin.ln
-                    res[0] = Result(
-                        error=f"Syntax Error in line {ln + 1}:\n"
+                    res[0] = Syntax_Result(
+                        error_msg=f"Syntax Error in line {ln + 1}:\n"
                         + "    "
                         + self.tok_obj.lines[ln].value
                         + "\n"
@@ -432,7 +433,7 @@ class SyntaxAnalyzer:
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
                         + f"Expected either & (for references) or := (for definition assignment), "
                         + "but found neither, actually found '{self.cur_tok.value}'",
-                        astNode=None,
+                        ast_node=tree_node,
                     )
                     break
 
@@ -449,8 +450,8 @@ class SyntaxAnalyzer:
                 else:
                     # FOUND NO :=
                     ln = self.cur_tok.begin.ln
-                    res[0] = Result(
-                        error=f"Syntax Error in line {ln + 1}:\n"
+                    res[0] = Syntax_Result(
+                        error_msg=f"Syntax Error in line {ln + 1}:\n"
                         + "    "
                         + self.tok_obj.lines[ln].value
                         + "\n"
@@ -459,7 +460,7 @@ class SyntaxAnalyzer:
                         + "\n"
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
                         + f"Expected :=, but found '{self.cur_tok.value}'",
-                        astNode=None,
+                        ast_node=tree_node,
                     )
                     break
 
@@ -477,8 +478,8 @@ class SyntaxAnalyzer:
                 else:
                     # FOUND NO VALID EXPRESSION
                     ln = self.cur_tok.begin.ln
-                    res[0] = Result(
-                        error=f"Syntax Error in line {ln + 1}:\n"
+                    res[0] = Syntax_Result(
+                        error_msg=f"Syntax Error in line {ln + 1}:\n"
                         + "    "
                         + self.tok_obj.lines[ln].value
                         + "\n"
@@ -488,7 +489,7 @@ class SyntaxAnalyzer:
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
                         + f"Expected an expression (variable, constant, number, string, array expression), "
                         + "but found '{self.cur_tok.value}'",
-                        astNode=None,
+                        ast_node=tree_node,
                     )
                     break
 
@@ -504,8 +505,8 @@ class SyntaxAnalyzer:
                 else:
                     # FOUND NEITHER (,) nor (;)
                     ln = self.cur_tok.begin.ln
-                    res[0] = Result(
-                        error=f"Syntax Error in line {ln + 1}:\n"
+                    res[0] = Syntax_Result(
+                        error_msg=f"Syntax Error in line {ln + 1}:\n"
                         + "    "
                         + self.tok_obj.lines[ln].value
                         + "\n"
@@ -514,7 +515,7 @@ class SyntaxAnalyzer:
                         + "\n"
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
                         + f"Expected either , (comma) or ; (semi-colon), but found neither, actually found '{self.cur_tok.value}'",
-                        astNode=None,
+                        ast_node=tree_node,
                     )
                     break
 
@@ -527,8 +528,8 @@ class SyntaxAnalyzer:
             if self.cur_tok.value == "define":
                 # CONST_VAR_DEFINITION
                 res = self.CONST_VAR_DEFINITION()
-                if res[-1].error:
-                    print(res[-1].error)
+                if res[-1].error_msg:
+                    print(res[-1].error_msg)
                     exit(0)
             self.advance()  # added this because code was stuck in a loop
             # Even thought things are OK
