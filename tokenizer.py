@@ -261,7 +261,7 @@ class Tokenizer:
 
                     # Error Handling
 
-                    # Make sure this indentation is spaces only to tabs only not a mix of spaces and tabs
+                    # Make sure this indentation is spaces only or tabs only not a mix of spaces and tabs
                     if (
                         " " in captured_indent
                         and "\t" in captured_indent
@@ -270,13 +270,17 @@ class Tokenizer:
                         # Syntax Error: Mixing spaces and tabs in indentation
                         error += f"Syntax Error in line {self.ln + 1}: Mixing spaces and tabs in indentation\n"
 
-                        error += "\n"
+                        error += "    "
+                        carets = 0
                         for c in captured_indent:
                             if c == "\t":
                                 error += "+" * self.tab_size
+                                carets += self.tab_size
                             else:
                                 error += "*"
+                                carets += 1
                         error += current_line[len(captured_indent) :] + "\n"
+                        error += "    " + "^" * carets
 
                     if error:
                         # Add explanatory tips
@@ -293,21 +297,23 @@ class Tokenizer:
 
                     # This line below must be here, because replacing all tabs with (self.tab_size) spaces
                     # will never trigger above if which reports mixing tabs and spaces
+                    old_captured_indent = captured_indent
                     captured_indent = captured_indent.replace("\t", " " * self.tab_size)
 
                     # Make sure this indentation is uniform
                     if len(captured_indent) % self.indent_size != 0 and self.ln != 0:
                         # Syntax Error: Indentation must a multiple of (self.indent_size)
+                        if error:
+                            error += "\n"
                         error += "<======================================================================>"
                         error += "\n"
 
                         error += f"Syntax Error in line {self.ln + 1}: Indentation must be a multiple of {self.indent_size}"
-                        error += "\n\n"
+                        error += "\n"
 
-                        error += ("+" if self.indent_type == " " else "*") * len(
-                            captured_indent.replace("\t", " " * self.tab_size)
-                        )
-                        error += current_line[len(captured_indent) :] + "\n\n"
+                        error += "    " + ("+" if self.indent_type == " " else "*") * len(captured_indent)
+                        error += current_line[len(old_captured_indent) :] + "\n"
+                        error += "    " + "^" * len(captured_indent) + "\n"
                         error += f"Found indent of {len(captured_indent)} {'spaces' if self.indent_type == ' ' else 'tabs'}\n"
 
                     captured_indent_level = len(captured_indent) // 4
@@ -377,16 +383,10 @@ if __name__ == "__main__":
     parser.add_argument("--source", help="A small code sample to execute")
     parser.add_argument("--file", help="Source file")
     parser.add_argument(
-        "--spaces",
-        help="Use spaces for indentation",
-        action="store_true",
-        default=True
+        "--spaces", help="Use spaces for indentation", action="store_true", default=True
     )
     parser.add_argument(
-        "--tabs",
-        help="Use tabs for indentation",
-        action="store_true",
-        default=False
+        "--tabs", help="Use tabs for indentation", action="store_true", default=False
     )
     parser.add_argument(
         "--indent_size", help="Indent size", default=4
@@ -423,6 +423,7 @@ if __name__ == "__main__":
     else:
         size = 4
 
+    print(args)
     tokenizer = Tokenizer(
         text=source, indent_type=indent, indent_size=size, tab_size=tab
     )
