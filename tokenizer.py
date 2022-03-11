@@ -280,33 +280,28 @@ class Tokenizer:
                                 error += "*"
                                 carets += 1
                         error += current_line[len(captured_indent) :] + "\n"
-                        error += "    " + "^" * carets
-
-                    if error:
-                        # Add explanatory tips
-                        indent_name = "Spaces" if self.indent_type == " " else "Tabs"
-                        tips = (
-                            f"Indent type: {indent_name}\n"
-                            + f"Indent Size: {self.indent_size} {indent_name}\n"
-                            + f"Tab Size:    {self.tab_size} Spaces\n"
-                            + f"+ = one space | * = one tab | "
-                            + f"{'+' * self.tab_size} = one tab converted to spaces ({self.tab_size} {indent_name})\n"
-                        )
-                        tips += "<======================================================================>\n"
-                        error = tips + error
+                        error += "    " + "^" * carets + "\n"
 
                     # This line below must be here, because replacing all tabs with (self.tab_size) spaces
                     # will never trigger above if which reports mixing tabs and spaces
                     old_captured_indent = captured_indent
-                    captured_indent = captured_indent.replace("\t", " " * self.tab_size)
+                    
+                    # check if command line arguments (--tabs/--spaces) match with source code indentation
+                    if self.indent_type not in captured_indent:
+                        if error:
+                            error += "<======================================================================>\n"
+                        error += f"When supplying --{'spaces' if self.indent_type == ' ' else 'tabs'}"
+                        error += f"command line argument, "
+                        error += "use --{'spaces' if self.indent_type == ' ' else 'tabs'}"
+                        error += "indentation\n"
+
+                    # captured_indent = captured_indent.replace("\t", " " * self.tab_size), this is wrong
 
                     # Make sure this indentation is uniform
                     if len(captured_indent) % self.indent_size != 0 and self.ln != 0:
                         # Syntax Error: Indentation must a multiple of (self.indent_size)
                         if error:
-                            error += "\n"
-                        error += "<======================================================================>"
-                        error += "\n"
+                            error += "<======================================================================>\n"
 
                         error += f"Syntax Error in line {self.ln + 1}: Indentation must be a multiple of {self.indent_size}"
                         error += "\n"
@@ -319,12 +314,24 @@ class Tokenizer:
                     captured_indent_level = len(captured_indent) // 4
                     if self.ln == 0 and len(captured_indent) != 0:
                         # if it is first line, this is Syntax Error
-                        if len(error) == 0:
-                            error += "Line 1:\n"
-                            error += current_line + "\n"
-                            error += "^" * len(captured_indent) + "\n"
-                        error += "Syntax Error: Indenting first line"
-                    # Error Handling Done!
+                        msg += "Line 1:\n"
+                        msg += current_line + "\n"
+                        msg += "^" * len(captured_indent.replace("\t", " " * self.tab_size)) + "\n"
+                        msg += "Syntax Error: Indenting first line\n"
+                        error = msg + "<======================================================================>\n" + error
+
+                    # Add explanatory tips
+                    if error:
+                        indent_name = "Spaces" if self.indent_type == " " else "Tabs"
+                        tips = (
+                            f"Indent type: {indent_name}\n"
+                            + f"Indent Size: {self.indent_size} {indent_name}\n"
+                            + f"Tab Size:    {self.tab_size} Spaces\n"
+                            + f"+ = one space | * = one tab | "
+                            + f"{'+' * self.tab_size} = one tab converted to spaces ({self.tab_size} {indent_name})\n"
+                        )
+                        tips += "<======================================================================>\n"
+                        error = tips + error
 
                     if error == "":
                         # this is not first line
