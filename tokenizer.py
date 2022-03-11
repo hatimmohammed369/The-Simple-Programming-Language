@@ -287,12 +287,12 @@ class Tokenizer:
                     old_captured_indent = captured_indent
                     
                     # check if command line arguments (--tabs/--spaces) match with source code indentation
-                    if self.indent_type not in captured_indent:
+                    if self.indent_type not in captured_indent and len(captured_indent) != 0:
                         if error:
                             error += "<======================================================================>\n"
-                        error += f"When supplying --{'spaces' if self.indent_type == ' ' else 'tabs'}"
+                        error += f"When supplying --{'spaces' if self.indent_type == ' ' else 'tabs'} "
                         error += f"command line argument, "
-                        error += "use --{'spaces' if self.indent_type == ' ' else 'tabs'}"
+                        error += f"use {'spaces' if self.indent_type == ' ' else 'tabs'} "
                         error += "indentation\n"
 
                     # captured_indent = captured_indent.replace("\t", " " * self.tab_size), this is wrong
