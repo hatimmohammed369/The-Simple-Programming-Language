@@ -374,8 +374,8 @@ if __name__ == "__main__":
 
     parser = ArgumentParser()
 
-    parser.add_argument("-s", "--source", help="A small code sample to execute")
-    parser.add_argument("-f", "--file", help="Source file")
+    parser.add_argument("--source", help="A small code sample to execute")
+    parser.add_argument("--file", help="Source file")
     parser.add_argument(
         "--indent_type",
         help="Indent type, use (s) or (S) for spaces, (t) or (T) for tabs",
