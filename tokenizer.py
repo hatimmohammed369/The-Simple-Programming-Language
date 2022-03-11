@@ -371,15 +371,23 @@ class Tokenizer:
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
+    from sys import argv
 
     parser = ArgumentParser()
 
-    parser.add_argument("-s", "--source", help="A small code sample to execute")
-    parser.add_argument("-f", "--file", help="Source file")
+    parser.add_argument("--source", help="A small code sample to execute")
+    parser.add_argument("--file", help="Source file")
     parser.add_argument(
-        "--indent_type",
-        help="Indent type, use (s) or (S) for spaces, (t) or (T) for tabs",
-        default="s",
+        "--tabs",
+        help="Indent using tabs",
+        action="store_true",  # when --tabs option is supplied, it's true
+        default=False,
+    )
+    parser.add_argument(
+        "--spaces",
+        help="Indent using spaces",
+        action="store_true",  # when --spaces option is supplied, it's true
+        default=True,
     )
     parser.add_argument(
         "--indent_size", help="Indent size", default=4
@@ -402,10 +410,12 @@ if __name__ == "__main__":
         tab = 4
 
     # Indent type
-    if args.indent_type:
-        indent = " " if args.indent_type.lower() == "s" else "\t"
-    else:
-        indent = " "
+    if "--tabs" in argv and "--spaces" in argv:
+        raise ValueError("Use either --tabs or --spaces, not both")
+
+    indent = " "
+    if "--tabs" in argv:
+        indent = "\t"
 
     # Indent size
     if args.indent_size:
