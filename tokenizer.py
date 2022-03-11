@@ -50,7 +50,7 @@ class Tokenizer:
     def __init__(
         self,
         text: str,  # Text to be tokenized
-        indent_type="s",  # which character to use for indentation,
+        indent_type=" ",  # which character to use for indentation,
         # if indent_type.lower() == "s" then we use spaces for indentation
         # if indent_type.lower() == "t" then we use tabs for indentation
         indent_size=4,  # How many indent characters in a single indent token
@@ -377,9 +377,16 @@ if __name__ == "__main__":
     parser.add_argument("--source", help="A small code sample to execute")
     parser.add_argument("--file", help="Source file")
     parser.add_argument(
-        "--indent_type",
-        help="Indent type, use (s) or (S) for spaces, (t) or (T) for tabs",
-        default="s",
+        "--spaces",
+        help="Use spaces for indentation",
+        action="store_true",
+        default=True
+    )
+    parser.add_argument(
+        "--tabs",
+        help="Use tabs for indentation",
+        action="store_true",
+        default=False
     )
     parser.add_argument(
         "--indent_size", help="Indent size", default=4
@@ -402,10 +409,13 @@ if __name__ == "__main__":
         tab = 4
 
     # Indent type
-    if args.indent_type:
-        indent = " " if args.indent_type.lower() == "s" else "\t"
-    else:
+    if args.spaces and args.tabs:
+        print("You can use both tabs and spaces indentation, pick one")
+        exit(1)
+    elif args.spaces:
         indent = " "
+    else:
+        indent = "\t"
 
     # Indent size
     if args.indent_size:
