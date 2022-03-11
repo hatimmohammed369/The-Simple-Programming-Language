@@ -261,6 +261,7 @@ class Tokenizer:
 
                     # Error Handling
 
+                    mixed_indent = False
                     # Make sure this indentation is spaces only or tabs only not a mix of spaces and tabs
                     if (
                         " " in captured_indent
@@ -273,21 +274,18 @@ class Tokenizer:
                         error += "    "
                         carets = 0
                         for c in captured_indent:
-                            if c == "\t":
-                                error += "+" * self.tab_size
-                                carets += self.tab_size
-                            else:
-                                error += "*"
-                                carets += 1
+                            error += ("+" if c == "\t" else "*")
+                            carets += 1
                         error += current_line[len(captured_indent) :] + "\n"
                         error += "    " + "^" * carets + "\n"
+                        mixed_indent = True
 
                     # This line below must be here, because replacing all tabs with (self.tab_size) spaces
                     # will never trigger above if which reports mixing tabs and spaces
                     old_captured_indent = captured_indent
                     
                     # check if command line arguments (--tabs/--spaces) match with source code indentation
-                    if self.indent_type not in captured_indent and len(captured_indent) != 0:
+                    if self.indent_type not in captured_indent and len(captured_indent) != 0 and not mixed_indent:
                         if error:
                             error += "<======================================================================>\n"
                         error += f"When supplying --{'spaces' if self.indent_type == ' ' else 'tabs'} "
@@ -298,7 +296,7 @@ class Tokenizer:
                     # captured_indent = captured_indent.replace("\t", " " * self.tab_size), this is wrong
 
                     # Make sure this indentation is uniform
-                    if len(captured_indent) % self.indent_size != 0 and self.ln != 0:
+                    if len(captured_indent) % self.indent_size != 0 and self.ln != 0 and not mixed_indent:
                         # Syntax Error: Indentation must a multiple of (self.indent_size)
                         if error:
                             error += "<======================================================================>\n"
@@ -309,10 +307,10 @@ class Tokenizer:
                         error += "    " + ("+" if self.indent_type == " " else "*") * len(captured_indent)
                         error += current_line[len(old_captured_indent) :] + "\n"
                         error += "    " + "^" * len(captured_indent) + "\n"
-                        error += f"Found indent of {len(captured_indent)} {'spaces' if self.indent_type == ' ' else 'tabs'}\n"
+                        error += "    " + f"Found indent of {len(captured_indent)} {'spaces' if self.indent_type == ' ' else 'tabs'}\n"
 
                     captured_indent_level = len(captured_indent) // 4
-                    if self.ln == 0 and len(captured_indent) != 0:
+                    if self.ln == 0 and len(captured_indent) != 0: # Report error even when mixed_indent
                         # if it is first line, this is Syntax Error
                         msg += "Line 1:\n"
                         msg += current_line + "\n"
@@ -384,6 +382,7 @@ class Tokenizer:
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
+    from sys import argv
 
     parser = ArgumentParser()
 
@@ -416,12 +415,12 @@ if __name__ == "__main__":
         tab = 4
 
     # Indent type
-    if args.spaces and args.tabs:
-        print("You can use both tabs and spaces indentation, pick one")
+    if args.spaces in argv and args.tabs in argv: # both --spaces and --tabs were supplied
+        print("You can not use both tabs and spaces indentation, pick one")
         exit(1)
-    elif args.spaces:
+    elif args.spaces in argv:
         indent = " "
-    else:
+    else: # args.tabs in argv
         indent = "\t"
 
     # Indent size
@@ -432,7 +431,7 @@ if __name__ == "__main__":
 
     print(args)
     tokenizer = Tokenizer(
-        text=source, indent_type=indent, indent_size=size, tab_size=tab
+        text=source, indent_type=indent, indent_size=int(size), tab_size=int(tab)
     )
     for token in tokenizer:
         print(token)
