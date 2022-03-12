@@ -337,7 +337,6 @@ class Tokenizer:
                                 + f"Found indent of {len(captured_indent)} {indent_name}s\n"
                             )
 
-                    captured_indent_level = len(captured_indent) // self.indent_size
                     if (
                         self.ln == 0 and len(captured_indent) != 0
                     ):  # Report error even when mixed_indent
@@ -372,6 +371,7 @@ class Tokenizer:
                         # this is not first line
                         # Dont add Indent/Outdent token only if captured_indent_level is not 0
                         current_indent_level = self.indent_stack[-1]
+                        captured_indent_level = len(captured_indent) // self.indent_size
 
                         begin = self.pos()
                         token = Token(value=captured_indent, begin=begin)
@@ -392,7 +392,7 @@ class Tokenizer:
                             # no indent or outdent, make token None
                             token = None
                         self.idx = first_non_white_space
-                        self.col = current_line.find(self.text[first_non_white_space])
+                        self.col = len(captured_indent)
                         if self.idx < len(self.text):
                             self.current_char = self.text[self.idx]
                         else:
