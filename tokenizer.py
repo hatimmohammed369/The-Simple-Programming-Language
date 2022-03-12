@@ -282,7 +282,7 @@ class Tokenizer:
 
                     # This line below must be here, because replacing all tabs with (self.tab_size) spaces
                     # will never trigger above if which reports mixing tabs and spaces
-                    old_captured_indent = captured_indent
+                    indent_name = "space" if self.indent_type == " " else "tab"
 
                     # check if command line arguments (--tabs/--spaces) match with source code indentation
                     if (
@@ -292,44 +292,57 @@ class Tokenizer:
                     ):
                         if error:
                             error += "<======================================================================>\n"
-                        error += f"When supplying --{'spaces' if self.indent_type == ' ' else 'tabs'} "
+                        error += f"When supplying --{indent_name}s"
                         error += f"command line argument, "
-                        error += (
-                            f"use {'spaces' if self.indent_type == ' ' else 'tabs'} "
-                        )
+                        error += f"use {indent_name}s "
                         error += "indentation\n"
 
                     # captured_indent = captured_indent.replace("\t", " " * self.tab_size), this is wrong
 
                     # Make sure this indentation is uniform
-                    if (
-                        len(captured_indent) % self.indent_size != 0
-                        and self.ln != 0
-                        and not mixed_indent
-                    ):
-                        # Syntax Error: Indentation must a multiple of (self.indent_size)
-                        if error:
-                            error += "<======================================================================>\n"
+                    if self.ln != 0 and not mixed_indent:
+                        if self.indent_size == 1 and len(captured_indent) > 1:
+                            # Syntax Error: Indent size is 1, but here there's more than one indent character
+                            if error:
+                                error += "<======================================================================>\n"
 
-                        error += f"Syntax Error in line {self.ln + 1}: Indentation must be a multiple of {self.indent_size}"
-                        error += "\n"
+                            error += f"Syntax Error in line {self.ln + 1}: "
+                            error += f"Indent is 1 {indent_name}, but here there's {len(captured_indent)} {indent_name}s\n"
 
-                        error += "    " + (
-                            "+" if self.indent_type == " " else "*"
-                        ) * len(captured_indent)
-                        error += current_line[len(old_captured_indent) :] + "\n"
-                        error += "    " + "^" * len(captured_indent) + "\n"
-                        error += (
-                            "    "
-                            + f"Found indent of {len(captured_indent)} {'spaces' if self.indent_type == ' ' else 'tabs'}\n"
-                        )
+                            error += "    " + (
+                                "+" if self.indent_type == " " else "*"
+                            ) * len(captured_indent)
+                            error += current_line[len(captured_indent) :] + "\n"
+                            error += "    " + "^" * len(captured_indent) + "\n"
+                            error += (
+                                "    "
+                                + f"Found indent of {len(captured_indent)} {indent_name}s\n"
+                            )
+
+                        if len(captured_indent) % self.indent_size != 0:
+                            # Syntax Error: Indentation must a multiple of (self.indent_size)
+                            if error:
+                                error += "<======================================================================>\n"
+
+                            error += f"Syntax Error in line {self.ln + 1}: Indentation must be a multiple of {self.indent_size}"
+                            error += "\n"
+
+                            error += "    " + (
+                                "+" if self.indent_type == " " else "*"
+                            ) * len(captured_indent)
+                            error += current_line[len(captured_indent) :] + "\n"
+                            error += "    " + "^" * len(captured_indent) + "\n"
+                            error += (
+                                "    "
+                                + f"Found indent of {len(captured_indent)} {indent_name}s\n"
+                            )
 
                     captured_indent_level = len(captured_indent) // 4
                     if (
                         self.ln == 0 and len(captured_indent) != 0
                     ):  # Report error even when mixed_indent
                         # if it is first line, this is Syntax Error
-                        msg += "Line 1:\n"
+                        msg = "Line 1:\n"
                         msg += current_line + "\n"
                         msg += (
                             "^"
@@ -345,13 +358,12 @@ class Tokenizer:
 
                     # Add explanatory tips
                     if error:
-                        indent_name = "Spaces" if self.indent_type == " " else "Tabs"
                         tips = (
-                            f"Indent type: {indent_name}\n"
-                            + f"Indent Size: {self.indent_size} {indent_name}\n"
+                            f"Indent type: {indent_name.title()}s\n"
+                            + f"Indent Size: {self.indent_size} {indent_name.title()}s\n"
                             + f"Tab Size:    {self.tab_size} Spaces\n"
                             + f"+ = one space | * = one tab | "
-                            + f"{'+' * self.tab_size} = one tab converted to spaces ({self.tab_size} {indent_name})\n"
+                            + f"{'+' * self.tab_size} = one tab converted to spaces ({self.tab_size} {indent_name.title()}s)\n"
                         )
                         tips += "<======================================================================>\n"
                         error = tips + error
@@ -465,9 +477,10 @@ if __name__ == "__main__":
         exit(0)
 
     args.indent_size = int(args.indent_size)
-    if args.indent_size:
+    if "--indent_size" in argv:  # --indent_size was supplied, use supplied value
         size = args.indent_size
     else:
+        # --indent_size was NOT supplied
         if "--spaces" in argv and "--tabs" not in argv:
             size = 4  # Use 4 spaces
         else:
