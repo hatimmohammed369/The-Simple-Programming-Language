@@ -449,7 +449,7 @@ if __name__ == "__main__":
     try:
         args.tab_size = int(args.tab_size)
     except:
-        print(f"{args.tab_size} is not a valid positive integer")
+        print(f"'{args.tab_size}' is not a valid positive integer")
         exit(0)
 
     tab = args.tab_size
@@ -473,7 +473,7 @@ if __name__ == "__main__":
     try:
         args.indent_size = int(args.indent_size)
     except:
-        print(f"{args.indent_size} is not a valid positive integer")
+        print(f"'{args.indent_size}' is not a valid positive integer")
         exit(0)
 
     args.indent_size = int(args.indent_size)
