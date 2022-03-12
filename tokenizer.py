@@ -253,7 +253,12 @@ class Tokenizer:
                     self.col += len(current_line)
                     self.current_char = "\n"
                     continue
-                else:
+                elif current_line[0] in (
+                    " ",
+                    "\t",
+                ):  # this line starts with a space or tab
+                    # so that we don't walk down this bunch of code only returning token=None
+                    # when we have no indentation or indenation has not changed
                     # this line contains some non-whitespaces
                     first_non_white_space = first_non_white_space.start()
                     captured_indent = self.text[self.idx : first_non_white_space]
