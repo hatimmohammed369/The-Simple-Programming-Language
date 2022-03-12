@@ -297,7 +297,7 @@ class Tokenizer:
                     ):
                         if error:
                             error += "<======================================================================>\n"
-                        error += f"When supplying --{indent_name}s"
+                        error += f"When supplying --{indent_name}s "
                         error += f"command line argument, "
                         error += f"use {indent_name}s "
                         error += "indentation\n"
