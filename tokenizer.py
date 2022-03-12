@@ -337,7 +337,7 @@ class Tokenizer:
                                 + f"Found indent of {len(captured_indent)} {indent_name}s\n"
                             )
 
-                    captured_indent_level = len(captured_indent) // 4
+                    captured_indent_level = len(captured_indent) // self.indent_size
                     if (
                         self.ln == 0 and len(captured_indent) != 0
                     ):  # Report error even when mixed_indent
