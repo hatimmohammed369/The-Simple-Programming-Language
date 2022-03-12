@@ -434,34 +434,52 @@ if __name__ == "__main__":
         source = args.source
 
     # Tab size
-    if args.tab_size:
-        tab = args.tab_size
-    else:
-        tab = 4
+    try:
+        args.tab_size = int(args.tab_size)
+    except:
+        print(f"{args.tab_size} is not a valid positive integer")
+        exit(0)
+
+    tab = args.tab_size
+
+    if tab <= 0:
+        print("Please give --tab_size a positive number")
+        exit(0)
 
     # Indent type
     if (
-        args.spaces in argv and args.tabs in argv
+        "--spaces" in argv and "--tabs" in argv
     ):  # both --spaces and --tabs were supplied
         print("You can not use both tabs and spaces indentation, pick one")
         exit(1)
-    elif args.spaces in argv:
+    elif "--spaces" in argv:
         indent = " "
     else:  # args.tabs in argv
         indent = "\t"
 
     # Indent size
+    try:
+        args.indent_size = int(args.indent_size)
+    except:
+        print(f"{args.indent_size} is not a valid positive integer")
+        exit(0)
+
+    args.indent_size = int(args.indent_size)
     if args.indent_size:
         size = args.indent_size
     else:
-        if args.spaces in argv and args.tabs not in argv:
+        if "--spaces" in argv and "--tabs" not in argv:
             size = 4  # Use 4 spaces
         else:
             size = 1  # Use 1 tab
 
+    if size <= 0:
+        print("Please give --indent_size a positive number")
+        exit(0)
+
     print(args)
     tokenizer = Tokenizer(
-        text=source, indent_type=indent, indent_size=int(size), tab_size=int(tab)
+        text=source, indent_type=indent, indent_size=size, tab_size=tab
     )
     for token in tokenizer:
         print(token)
