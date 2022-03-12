@@ -26,6 +26,7 @@ KEYWORDS = (
     "else",
     "else_if",
     "for",
+    "in",
     "while",
     "break",
     "continue",
