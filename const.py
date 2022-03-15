@@ -33,6 +33,8 @@ KEYWORDS = (
     "pass",
 )
 
+BLOCK_STATEMENTS = ("if", "else", "else_if", "for", "while")
+
 PRIMITIVE_DATA_TYPES = ("int", "real", "bool", "string", "array")
 
 OPERATORS = (
