@@ -77,7 +77,7 @@ class Tokenizer:
 
         self.supplied_spaces_explicitly = supplied_spaces_explicitly
 
-        self.indent_allowed = False  # True when
+        self.indent_allowed = False  # True when having met a block statement keyword (something like for, if, else_if), False otherwise
 
     def pos(self):
         return Pos(self.idx, self.col, self.ln)
@@ -162,6 +162,51 @@ class Tokenizer:
                     indent_name = "space" if self.indent_type == " " else "tab"
                     opposite_indent_name = "tab" if indent_name == "space" else "space"
 
+                    # <======================================================================>
+                    # Add explanatory tips
+                    tips = ""
+                    if (
+                        self.supplied_spaces_explicitly is False
+                        and self.indent_type != "\t"
+                    ):  # no --tabs or --spaces, so use --spaces by default
+                        tips += "You used neither --spaces not --tabs, so --spaces is used by default"
+                    else:
+                        tips += f"You used --{indent_name}s"
+
+                    tips += "\n"
+
+                    tips += (
+                        f"Indent type: {indent_name.title()}s\n"
+                        + f"Indent Size: {'One' if self.indent_size == 1 else self.indent_size} "
+                        + f"{indent_name.title()}{'' if self.indent_size == 1 else 's'}\n"
+                        + f"+ = one space | * = one tab\n"
+                    )
+                    # TIP DONE
+                    # <======================================================================>
+
+                    indenting_top_level_code = False
+                    if (
+                        not self.indent_allowed  # we are not allowed to indent, something like top level code
+                        and len(self.indent_stack)
+                        == 1  # When moving through top-level code, indent_stack is always [0]
+                        and len(captured_indent) != 0  # Trying to add an actual indent
+                    ):
+                        # Indentation Error: Indenting top-level code
+                        error = tips + "\n"
+                        error += "<======================================================================>\n"
+                        error += f"Indentation Error in line {self.ln + 1}: Indenting top-level code:\n"
+                        error += " " * 4
+                        for c in captured_indent:
+                            error += "+" if c == " " else "*"
+                        error += current_line[len(captured_indent) :] + "\n"
+                        error += " " * 4 + "^" * len(captured_indent) + "\n"
+                        error += " " * 4 + "Found indentation, remove it\n"
+                        indenting_top_level_code = True
+
+                    if indenting_top_level_code:
+                        # No need to see other errors
+                        return error, None  # JUST IGNORE THIS TYPE-CHECKING ERROR
+
                     # First check this captured_indent is matches self.indent_type
                     opposite_type_detected = False
                     if (
@@ -201,7 +246,7 @@ class Tokenizer:
                         len(captured_indent) > self.indent_size
                         and not opposite_type_detected
                     ):
-                        if not error:
+                        if error != "":
                             error += "<======================================================================>\n"
                         error += f"Indentation Error: Indenting with more than "
                         error += (
@@ -230,7 +275,7 @@ class Tokenizer:
                         len(captured_indent) < self.indent_size
                         and not opposite_type_detected
                     ):
-                        if not error:
+                        if error != "":
                             error += "<======================================================================>\n"
                         error += f"Indentation Error: Indenting with less than "
                         error += (
@@ -252,39 +297,6 @@ class Tokenizer:
                         )
                         needed = self.indent_size - len(captured_indent)
                         error += f"add {'one' if needed == 1 else needed} more {indent_name}{'' if needed == 1 else 's'}"
-
-                    if self.indent_stack[-1] == 0 and len(captured_indent) != 0:
-                        # if it is first line, this is Syntax Error
-                        msg = "Line 1:\n"
-                        msg += current_line + "\n"
-                        msg += "^" * len(captured_indent) + "\n"
-                        msg += "Syntax Error: Indenting first line\n"
-                        error = (
-                            msg
-                            + "<======================================================================>\n"
-                            + error
-                        )
-
-                    # Add explanatory tips
-                    if error:
-                        tips = ""
-                        if (
-                            self.supplied_spaces_explicitly is False
-                            and self.indent_type != "\t"
-                        ):  # no --tabs or --spaces, so use --spaces by default
-                            tips += "You used neither --spaces not --tabs, so --spaces is used by default"
-                        else:
-                            tips += f"You used --{indent_name}s"
-
-                        tips += "\n"
-
-                        tips += (
-                            f"Indent type: {indent_name.title()}s\n"
-                            + f"Indent Size: {'One' if self.indent_size == 1 else self.indent_size} "
-                            + f"{indent_name.title()}{'' if self.indent_size == 1 else 's'}\n"
-                            + f"+ = one space | * = one tab\n"
-                        )
-                        error = tips + error
 
                     else:
                         # No errors
@@ -312,6 +324,8 @@ class Tokenizer:
                             # no indent or outdent, make token None
                             token = None
                         steps = len(captured_indent)
+                else:
+                    return "", None
 
             elif self.current_char == "\n":
                 # LINE_BREAK
@@ -370,7 +384,11 @@ class Tokenizer:
                     else:
                         token.name = "KEYWORD"
                         if token.value in BLOCK_STATEMENTS:
-                            pass
+                            # We can accept indentation
+                            self.indent_allowed = True
+                        elif token.value == "end":
+                            # We do not accept indentation now
+                            self.indent_allowed = False
                 else:
                     token.name = "NAME"
                 steps = len(token.value)
@@ -518,7 +536,6 @@ if __name__ == "__main__":
         print("Please give --indent_size a positive number")
         exit(0)
 
-    print(args)
     tokenizer = Tokenizer(
         text=source,
         indent_type=indent,
