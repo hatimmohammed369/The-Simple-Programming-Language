@@ -15,6 +15,10 @@ Semi-colons are optional
 
 <#####################################################################################################>
 
+Multi-line statements MUST BE ENCLOSED IN ()
+
+<#####################################################################################################>
+
 Primitive data types:
 int     =>  Signed/Unsigned integers
 float   =>  Floating-Point number
@@ -142,7 +146,7 @@ We also have the all usual (break), (continue) and (return) statements
 
 Operators: Arthimetic or Logical or Assignment_Operator
 Arthimetic: Float_Number_Operator or Integer_Operator
-Float_Number_Operator: + - * / 
+Float_Number_Operator: + - * /
 Integer_Operator: ~:not &:and |:or ^:xor >>:right_shift <<:left_shift ++ --
 Logical: == != < <= > >= and not or
 Assignment_Operator:
