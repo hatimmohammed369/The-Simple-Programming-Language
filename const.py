@@ -20,7 +20,7 @@ KEYWORDS = (
     "false",
     "array",
     "ref_of",
-    "fn",
+    "function",
     "return",
     "if",
     "else",
@@ -33,7 +33,7 @@ KEYWORDS = (
     "pass",
 )
 
-BLOCK_STATEMENTS = ("if", "else", "else_if", "for", "while")
+BLOCK_STATEMENTS = ("function", "if", "else", "else_if", "for", "while")
 
 PRIMITIVE_DATA_TYPES = ("int", "real", "bool", "string", "array")
 
