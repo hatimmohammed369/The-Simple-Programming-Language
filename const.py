@@ -20,17 +20,20 @@ KEYWORDS = (
     "false",
     "array",
     "ref_of",
-    "fn",
+    "function",
     "return",
     "if",
     "else",
     "else_if",
     "for",
+    "in",
     "while",
     "break",
     "continue",
     "pass",
 )
+
+BLOCK_STATEMENTS = ("function", "if", "else", "else_if", "for", "while")
 
 PRIMITIVE_DATA_TYPES = ("int", "real", "bool", "string", "array")
 
