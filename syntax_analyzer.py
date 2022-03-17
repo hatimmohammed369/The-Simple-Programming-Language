@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3.10
+
 from tokenizer import *
 from typing import List
 
@@ -321,8 +323,8 @@ class SyntaxAnalyzer:
                         + "^" * len(self.cur_tok.value)
                         + "\n"
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                        + f"Expected a valid variable/constant name, "
-                        + "but found '{self.cur_tok.value}'",
+                        + f"Expected a valid identifier name, "
+                        + f"found '{self.cur_tok.value}'",
                         ast_node=tree_node,
                     )
                     break
@@ -347,7 +349,7 @@ class SyntaxAnalyzer:
                         + "^" * len(self.cur_tok.value)
                         + "\n"
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                        + f"Expected a single colon (:), but found '{self.cur_tok.value}'",
+                        + f"Expected a single colon (:), found '{self.cur_tok.value}'",
                         ast_node=tree_node,
                     )
                     break
@@ -373,7 +375,7 @@ class SyntaxAnalyzer:
                         + "\n"
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
                         + f"Expected either lowercase (const) or lowercase (var), "
-                        + "but found neither, actually found '{self.cur_tok.value}'",
+                        + f"found '{self.cur_tok.value}'",
                         ast_node=tree_node,
                     )
                     break
@@ -432,7 +434,7 @@ class SyntaxAnalyzer:
                         + "\n"
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
                         + f"Expected either & (for references) or := (for definition assignment), "
-                        + "but found neither, actually found '{self.cur_tok.value}'",
+                        + f"found '{self.cur_tok.value}'",
                         ast_node=tree_node,
                     )
                     break
@@ -459,7 +461,7 @@ class SyntaxAnalyzer:
                         + "^" * len(self.cur_tok.value)
                         + "\n"
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                        + f"Expected :=, but found '{self.cur_tok.value}'",
+                        + f"Expected :=, found '{self.cur_tok.value}'",
                         ast_node=tree_node,
                     )
                     break
@@ -488,7 +490,7 @@ class SyntaxAnalyzer:
                         + "\n"
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
                         + f"Expected an expression (variable, constant, number, string, array expression), "
-                        + "but found '{self.cur_tok.value}'",
+                        + f"found '{self.cur_tok.value}'",
                         ast_node=tree_node,
                     )
                     break
@@ -514,7 +516,7 @@ class SyntaxAnalyzer:
                         + "^" * len(self.cur_tok.value)
                         + "\n"
                         + " " * (self.cur_tok.end.col + (4 - len(self.cur_tok.value)))
-                        + f"Expected either , (comma) or ; (semi-colon), but found neither, actually found '{self.cur_tok.value}'",
+                        + f"Expected either , (comma) or ; (semi-colon), found '{self.cur_tok.value}'",
                         ast_node=tree_node,
                     )
                     break
@@ -539,3 +541,89 @@ class SyntaxAnalyzer:
 
 
 # End Of Class SyntaxAnalyzer
+
+if __name__ == "__main__":
+    from argparse import ArgumentParser
+    from sys import argv
+
+    parser = ArgumentParser()
+
+    parser.add_argument("--source", help="A small code sample to execute")
+    parser.add_argument("--file", help="Source file")
+    parser.add_argument(
+        "--spaces",
+        help="Use spaces for indentation, default\n"
+        + "In other words, when supplying neither --spaces not --tabs, --spaces is default",
+        action="store_true",
+        default=True,
+    )
+    parser.add_argument(
+        "--tabs", help="Use tabs for indentation", action="store_true", default=False
+    )
+    parser.add_argument(
+        "--indent_size", help="Indent size", default=4
+    )  # this means one indent token equals 4 spaces/tabs
+
+    args = parser.parse_args()
+    cmd_line = "".join(argv)
+
+    # Source code
+    if args.file:
+        source = open(args.file).read()
+    else:
+        source = args.source
+
+    # Indent type
+    if (
+        "--spaces" in argv and "--tabs" in argv
+    ):  # both --spaces and --tabs were supplied
+        print("You can not use both tabs and spaces indentation, pick one")
+        exit(1)
+
+    supplied_spaces_explicitly = False
+    if (
+        "--spaces" in argv and "--tabs" not in argv
+    ):  # --spaces was supplied, --tabs was not
+        indent = " "
+        supplied_spaces_explicitly = True
+    elif (
+        "--tabs" in argv and "--spaces" not in argv
+    ):  # --tabs was supplied, --spaces was not
+        indent = "\t"
+        supplied_spaces_explicitly = False
+    else:  # neither --spaces nor --tabs, then assume --spaces
+        indent = " "  # not supplied
+        supplied_spaces_explicitly = False
+
+    # Indent size
+    try:
+        args.indent_size = int(args.indent_size)
+    except:
+        print(f"--indent_size '{args.indent_size}' is not a valid positive integer")
+        exit(0)
+
+    if args.indent_size <= 0:
+        print(f"--indent_size '{args.indent_size}' is not a positive integer")
+        exit(0)
+
+    if "--indent_size" in argv:  # --indent_size was supplied, use supplied value
+        size = args.indent_size
+    else:
+        # --indent_size was NOT supplied
+        if "--tabs" in argv:  # --tabs only
+            size = 1  # Use 1 tab
+        else:  # --spaces or (no --spaces and no --tabs)
+            size = 4
+
+    if size <= 0:
+        print("Please give --indent_size a positive number")
+        exit(0)
+
+    SyntaxAnalyzer(
+        Tokenizer(
+            text=source,
+            indent_type=indent,
+            indent_size=size,
+            supplied_spaces_explicitly=supplied_spaces_explicitly,
+        )
+    ).analyze()
