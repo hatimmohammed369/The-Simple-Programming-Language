@@ -87,7 +87,7 @@ class Tokenizer:
 
         self.left_parenthesis_stack = (
             []
-        )  # Store ('s token to enable multi-line statements
+        )  # Store left parentheses "( or [" tokens to enable multi-line statements
 
         self.blocks: List[Block] = []
 
@@ -407,21 +407,29 @@ class Tokenizer:
             steps = len(token.value)
 
         elif sep := SEPARATOR_PATTERN.match(string=self.text, pos=self.idx):
-            # (, ), {, }, :, (,), ;
-            if sep.group() == ")" and len(self.left_parenthesis_stack) == 0:
+            # ()[],;:
+            if (sep.group() == ")" or sep.group() == "]") and len(
+                self.left_parenthesis_stack
+            ) == 0:
                 cur_line_obj = self.current_line()
                 current_line = cur_line_obj.value
                 first_non_white_space = (
                     re.compile(r"[^\s]").match(string=current_line).start()
                 )
-                error += f"Syntax Error in line {self.ln + 1}: Unexpected )\n"
+                error += (
+                    f"Syntax Error in line {self.ln + 1}: Unexpected {sep.group()}\n"
+                )
                 error += " " * 4 + "".join(
                     "+" if c == " " else "*"
                     for c in current_line[:first_non_white_space]
                 )
                 error += current_line[first_non_white_space:] + "\n"
                 error += " " * 4 + " " * self.col + "^" + "\n"
-                error += " " * 4 + " " * self.col + "This ) has no matching (\n"
+                error += (
+                    " " * 4
+                    + " " * self.col
+                    + f"This {sep.group()} has no matching {'(' if sep.group() == ')' else '['}\n"
+                )
             else:
                 begin = self.pos()
                 token = Token(begin=begin)
@@ -434,9 +442,11 @@ class Tokenizer:
                     self.ln,
                 )
 
-                if token.value == "(":
+                if token.value in ("(", "["):
+                    # PUSH NEW MULTI-LINE STATEMENT STATE
                     self.left_parenthesis_stack.append(token)
-                elif token.value == ")":
+                elif token.value in (")", "]"):
+                    # POP CURRENT MULTI-LINE STATEMENT STATE
                     self.left_parenthesis_stack.pop(-1)
 
                 steps = len(token.value)
