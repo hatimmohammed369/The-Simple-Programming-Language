@@ -15,7 +15,7 @@ Semi-colons are optional
 
 <#####################################################################################################>
 
-Multi-line statements MUST BE ENCLOSED IN ()
+Multi-line statements MUST BE ENCLOSED IN (), or [] when indexing arrays
 
 <#####################################################################################################>
 
@@ -91,7 +91,7 @@ ALL BLOCK STATEMENTS MUST HAVE (end "something") to denote their end
 <#####################################################################################################>
 
 FUNCTIONS:
-fn function_name(parameters_list): return_type
+function function_name(parameters_list): return_type
     body
 end "anything you like here"
 
@@ -134,7 +134,7 @@ end "while condition statement"
 <#####################################################################################################>
 
 EMPTY BLOCK:
-fn func()
+function func()
     pass
 end "func()"
 
