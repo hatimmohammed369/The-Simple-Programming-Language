@@ -45,6 +45,9 @@ class Block:
     allowed_indent: int = 0
     indent_size = None
 
+    def __repr__(self):
+        return f"Block(header={self.header}, allowed_indent={self.allowed_indent}, indent_size={self.indent_size})"
+
 
 class Tokenizer_Result(Result):
     def __init__(self, error_msg: str = "", token: Token = Token()):
@@ -265,11 +268,12 @@ class Tokenizer:
 
                 if opposite_type_detected is False and (
                     len(self.indent_stack) != 0
-                    and len(captured_indent) not in self.indent_stack
+                    and all(b.indent_size is None for b in self.blocks)
                 ):
                     if error != "":
                         error += "<======================================================================>\n"
                     level = len(captured_indent) // self.indent_size
+                    print(f"{self.blocks = }")
                     error += f"Indentation Error in line {self.ln + 1}: Indent level {level} belongs to no block\n"
                     error += " " * 4
                     char = "+" if indent_name == "space" else "*"
