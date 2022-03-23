@@ -27,7 +27,7 @@ class Pos:
 @dataclass(init=True, repr=True, eq=True)
 class Token:
     name: str = ""
-    value: Any = None
+    value: str = ""
     begin: Pos = None
     end: Pos = None
 
@@ -46,11 +46,11 @@ class Block:
 
     def __init__(
         self,
-        header=None,
-        header_complete=False,
-        header_type=None,
-        header_indent=None,
-        indent_size=None,
+        header: List[Token] =None,
+        header_complete: bool =False,
+        header_type: str =None,
+        header_indent: Token =None,
+        indent_size: int =None,
     ):
         # All tokens comprising this block's header, like (if) token and all tokens of its condition
         self.header: List[Token] = header
@@ -150,8 +150,6 @@ class Tokenizer:
 
         self.blocks: List[Block] = []
 
-        self.temp_outdent_token: Token = None  # JUST IGNORE THIS TYPE-CHECKING ERROR
-
         # True upon encountering keyword (end), False after finding its label
         self.end_string = False
 
@@ -243,7 +241,7 @@ class Tokenizer:
                 # this line is empty or it is just whitespaces
                 steps = len(current_line)
 
-            elif len(self.blocks) > 0 and (  # Do checking when we have an active block
+            elif self.blocks and (  # Do checking when we have an active block
                 current_line[0] in (" ", "\t")
                 # Do not check indentation these separators
                 or first_non_white_space.group() not in ("#", ",", ";", ":", ")", "]", '"')
@@ -258,10 +256,9 @@ class Tokenizer:
                 # <======================================================================>
                 # Indenting top level code error
                 if (
-                    len(self.left_parenthesis_stack) == 0  # (Multi-line)ing is disable
-
+                    not self.left_parenthesis_stack  # (Multi-line)ing is disable
                     # No active blocks, we are inside no block, we livin' in top level code
-                    and len(self.blocks) == 0
+                    and not self.blocks
                     # So no active () or [] and no active blocks
                 ) and len(captured_indent) != 0:  # Trying to add an actual indent
                     # Indentation Error: Indenting top-level code
@@ -274,7 +271,6 @@ class Tokenizer:
                     error += " " * 4 + "Found indentation, remove it\n"
                     # No need to see other errors
                     return error, None  # JUST IGNORE THIS TYPE-CHECKING ERROR
-
                 # Indenting top level code error
                 # <======================================================================>
 
@@ -287,7 +283,6 @@ class Tokenizer:
                 ) or (  # Using tabs when indenting with spaces
                     " " in captured_indent and self.indent_name == "tab"
                 ):  # Using spaces when indenting with tabs
-
                     error += f"Indentation Error in line {self.ln + 1}: "
                     error += f"Using (disabled) {opposite_indent_name}s with (enabled) {self.indent_name}s indentation\n"
                     error += " " * 4
@@ -312,7 +307,8 @@ class Tokenizer:
                     opposite_type_detected = True
 
                 if opposite_type_detected is False and (
-                    self.indent_size != 1
+                    (0 if not self.blocks[-1].header_indent else len(self.blocks[-1].header_indent.value)) < len(captured_indent)
+                    and self.indent_size != 1
                     and (remaining := len(captured_indent) % self.indent_size) != 0
                 ):
                     if error != "":
@@ -331,106 +327,84 @@ class Tokenizer:
                     error += f"{self.indent_name}{'' if remaining == 1 else 's'} "
                     error += f"or add another {'one' if (n:=self.indent_size-remaining) == 1 else n}"
 
-                if opposite_type_detected is False and self.blocks:
+                if opposite_type_detected is False:
                     current_block = self.blocks[-1]
 
                     if current_block.header_indent:
-                        current_block_header_indent_value = len(current_block.header_indent.value)
+                        current_block_header_indent = len(current_block.header_indent.value)
                     else:
-                        current_block_header_indent_value = 0
+                        current_block_header_indent = 0
 
                     current_block_indent_size = current_block.indent_size
                     captured_indent_length = len(captured_indent)
 
                     if current_block.indent_size:
-                        # <======================================================================>
-                        # this block has at least one statement, something like this
-                        # if x == 0
-                        #     pass
-                        # end
-                        # maybe not indented correctly
-                        # <======================================================================>
+                            # <======================================================================>
+                            # this block has at least one statement, something like this
+                            # if x == 0
+                            #     pass
+                            # end
+                            # maybe not indented correctly
+                            # <======================================================================>
 
-                        if captured_indent_length < current_block_header_indent_value:
-                            if captured_indent_length < current_block_indent_size:
+                            if captured_indent_length < current_block_header_indent:
+                                if captured_indent_length < current_block_indent_size:
+                                    pass
+
+                            elif captured_indent_length == current_block_header_indent:
                                 pass
 
-                        elif captured_indent_length == current_block_header_indent_value:
-                            pass
-
-                        # elif current_block_header_indent_value > captured_indent_length
-                        elif captured_indent_length < current_block_header_indent_value:
-                            pass
+                            # elif current_block_header_indent > captured_indent_length
+                            elif captured_indent_length < current_block_header_indent:
+                                pass
 
                     else: # elif current_block.indent_size is None
-                        next_word = re.compile(r"[^\s]+").match(current_line)
-                        if not next_word:
-                            pass
+                        # this block HAS NO statements
+                        # something like
+                        # if x == 0
+                        # end
 
-                        else:
-                            next_word = next_word.group()
-                            if next_word not in ("end", "else", "else_if") and not self.left_parenthesis_stack:
-                                pass
+                        # or something like
+                        #     if x == 0
+                        # end
 
-                            else:
-                                errors = 0
-                                if captured_indent_length < current_block_header_indent_value:
-                                    # <======================================================================>
-                                    # This block has no statements, something like this
-                                    #     if x == 0
-                                    # end
-                                    # THIS IS ERROR, EXPECTED PASS STATEMENT
-                                    # <======================================================================>
-
-                                    if error:
-                                        error += "<======================================================================>\n"
-
-                                    next_word = NAME_PATTERN.match(string=current_line, pos=self.idx)
-                                    if next_word == "end":
-                                        error += f"Indentation Error in line {self.ln + 1}: "
-                                        error += f"(end) not matching {current_block.header_name} indentation level"
-                                    else:
-                                        error += f"Syntax Error in line {self.ln + 1}"
-                                    error += "\n"
-
-                                    error += f"{self.ln}:" + " " * 4 + self.current_line_indented() + "\n"
-                                    error += " " * len(f"{self.ln}:") + " " * 4 + " " * self.col + " " * len(next_word.group())
-
-                                    if next_word == "end":
-                                        remaining = current_block_header_indent_value - captured_indent_length
-                                        error += "Add {'one' if remaining == 1 else remaining} "
-                                        error += f"{self.indent_name}{'' if remaining == 1 else 's'}"
-                                    else:
-                                        error += f"Invalid syntax, Remove this '{next_word.group()}'"
-                                    error += "\n"
-
-                                    errors += 1
-
-                                if captured_indent_length == current_block_header_indent_value:
-                                    # <======================================================================>
-                                    # This block has no statements, something like this
-                                    # if x == 0
-                                    # end
-                                    # THIS IS ERROR, EXPECTED PASS STATEMENT
-                                    # <======================================================================>
-
-                                    if error:
-                                        error += "<======================================================================>\n"
-
-                                    error += f"Syntax Error in line {self.ln + 1}: "
-                                    error += f"Expected 'pass' statement in side '{current_block.header_name}'\n"
-                                    error += " " * 4 + current_block.header_string
-                                    error += " " * 4 + self.indent_char * self.indent_size + "pass" + "\n"
-                                    error += " " * 4 + " " * self.indent_size + "^^^^" + "\n"
-                                    error += " " * 4 + " " * self.indent_size + "Add this" + "\n"
+                        if len(captured_indent) <= current_block_header_indent:
+                            if error:
+                                error += "<======================================================================>\n"
+                            next_thing = re.compile(r"[^\s]+").search(string=current_line);
+                            start = next_thing.start()
+                            next_thing = next_thing.group()
+                            if next_thing in ("end", "else", "else_if"):
+                                if len(captured_indent) < current_block_header_indent:
+                                    error += f"Syntax Error in line {self.ln + 1}: Outdented (end) and no (pass) statement\n"
+                                    error += " " * 4 + self.indent_char * current_block_header_indent
+                                    error += current_block.header_string[current_block_header_indent:]
                                     error += " " * 4 + self.current_line_indented() + "\n"
-                                    errors += 1
-
-                                if errors == 2:
-                                    error += "<======================================================================>\n"
-                                    error += "First add one more indent to (end), and then add (pass) statement"
-
-                                del errors
+                                    error += " " * 4 + " " * self.col + "^" * len(next_thing) + "\n"
+                                    error += "Indent (end) and add (pass) as shown below:\n"
+                                    error += " " * 4 + self.indent_char * current_block_header_indent
+                                    error += current_block.header_string[current_block_header_indent:]
+                                    error += " " * 4 + " " * current_block_header_indent + self.indent_char * self.indent_size + "pass" + "\n"
+                                    error += " " * 4
+                                    error += self.indent_char * current_block_header_indent + "end" + "\n"
+                                else: # elif len(captured_indent) == current_block_header_indent
+                                    error += f"Syntax Error in line {self.ln + 1}: Missing (pass) statement\n"
+                                    error += " " * 4 + self.indent_char * current_block_header_indent
+                                    error += current_block.header_string[current_block_header_indent:]
+                                    error += " " * 4 + self.current_line_indented() + "\n"
+                                    error += "Add (pass) as show below:\n"
+                                    error += " " * 4 + self.indent_char * current_block_header_indent
+                                    error += current_block.header_string[current_block_header_indent:]
+                                    error += " " * 4 + self.indent_char * current_block_header_indent
+                                    error += self.indent_char * self.indent_size + "pass" + "\n"
+                                    error += " " * 4
+                                    error += self.indent_char * current_block_header_indent + "end" + "\n"
+                            else:
+                                # some garbage
+                                # if x == 0
+                                # print
+                                pass
+                            del start, next_thing
                 # ERROR HANDLING DONE
                 # <======================================================================>
 
@@ -525,12 +499,6 @@ class Tokenizer:
                     error += "<======================================================================>\n"
                 error += f'Syntax Error in line {self.ln + 1}: Unclosed "\n'
                 current_line = self.current_line().value
-                indent_stop = re.compile(r"[^\s]").match(string=current_line)
-                if indent_stop:
-                    indent_stop = indent_stop.start()
-                else:
-                    indent_stop = 0
-
                 error += " " * 4 + current_line + "\n"
                 error += " " * 4 + " " * self.col + "^"
 
@@ -542,7 +510,9 @@ class Tokenizer:
             token.begin = begin = self.pos()
             token.value = current_identifier
             token.end = Pos(
-                begin.idx + len(token.value), begin.col + len(token.value), self.ln
+                idx=begin.idx + len(token.value),
+                col=begin.col + len(token.value),
+                ln=self.ln
             )
 
             if token.value in KEYWORDS:
@@ -551,7 +521,10 @@ class Tokenizer:
                 else:
                     token.name = "KEYWORD"
                     if token.value == "end":
-                        if self.left_parenthesis_stack: # multi-ling is not allowed with (end)
+                        if (
+                            self.left_parenthesis_stack
+                            or (self.left_parenthesis_stack and self.end_string)
+                        ): # multi-ling is not allowed with (end)
                             if error:
                                 error += "<======================================================================>\n"
                             error += f"Error in line {self.ln + 1}: Multi-lined end statement\n"
@@ -561,11 +534,11 @@ class Tokenizer:
                             error += " " * 4 + " " * len(f"{tok.begin.ln:^{width}}:") + " " * tok.begin.col + "^" + "\n"
                             for ln_idx in range(tok.begin.ln+1, self.ln+1):
                                 error += f"{ln_idx:^{width}}:" + " " * 4 + self.lines[ln_idx].value + "\n"
-                            error += " " * 4 + " " * len(f"{tok.begin.ln:^{width}}:") + " " * self.col + "^^^" + "\n"
                             error += f"Remove ( above in line {tok.begin.ln}"
                         else:
                             self.end_string = True
-                    elif token.value in KEYWORDS:
+
+                    elif token.value in BLOCK_STATEMENTS:
                         if self.left_parenthesis_stack:
                             # Multi-ling with block headers, something like this, NOT ALLOWED
                             # (if
@@ -601,6 +574,21 @@ class Tokenizer:
                             error += len(f"{left_par_line:^{width}}:") * " " + " " * 4 + " " * left_par_tok.begin.col
                             error += "^" + "\n"
                             error += f"Remove this (, use it after '{token.value}'\n"
+                        else:
+                            self.blocks.append(
+                                Block(
+                                    header=[token],
+                                    header_complete=(token.value == "else"),
+                                    header_type=Block.SINGLE,
+                                    header_indent=(
+                                        None
+                                        if not self.indent_token_stack
+                                        else
+                                        self.indent_token_stack[-1]
+                                    ),
+                                    indent_size=None
+                                )
+                            )
             else:
                 token.name = "NAME"
             steps = len(token.value)
@@ -677,9 +665,31 @@ class Tokenizer:
 
                 if token.value in ("(", "["):
                     # PUSH NEW MULTI-LINE STATEMENT STATE
-                    self.left_parenthesis_stack.append(token)
+                    if self.end_string:
+                        if error:
+                            error += "<======================================================================>\n"
+                        error += f"Error in line {self.ln + 1}: Multi-lined end statement\n"
+                        error += " " * 4 + self.current_line().value + "\n"
+                        error += f"Remove ( and above"
+                    else:
+                        self.left_parenthesis_stack.append(token)
+                        if self.blocks:
+                            if not self.blocks[-1].header_complete:
+                                self.blocks[-1].header_type = Block.MULTI
                 elif token.value in (")", "]"):
                     # POP CURRENT MULTI-LINE STATEMENT STATE
+                    if self.end_string:
+                        if error:
+                            error += "<======================================================================>\n"
+                        error += f"Error in line {self.ln + 1}: Multi-lined end statement\n"
+                        tok = self.left_parenthesis_stack[-1]
+                        for n in range(tok.begin.ln, self.ln+1):
+                            error += " " * 4 + self.lines[n].value + "\n"
+                        error += f"Remove ( and ) above"
+                    else:
+                        if self.blocks:
+                            self.blocks[-1].add(token)
+                            self.blocks[-1].header_complete = True
                     self.left_parenthesis_stack.pop(-1)
 
                 steps = len(token.value)
@@ -706,11 +716,13 @@ class Tokenizer:
                 f"Indent type: {self.indent_name.title()}s\n"
                 + f"Indent Size: {'One' if self.indent_size == 1 else self.indent_size} "
                 + f"{self.indent_name.title()}{'' if self.indent_size == 1 else 's'}\n"
+                + f"One Indent: {self.indent_char * self.indent_size}\n"
                 + f"+ = one space | * = one tab\n"
             )
             # TIP DONE
             # <======================================================================>
 
+            tips += "<======================================================================>\n"
             error = tips + error
 
         return error, token  # JUST IGNORE THIS TYPE-CHECKING ERROR
@@ -720,117 +732,12 @@ class Tokenizer:
             error, token = self.next_token()
 
             if token is not None:
-                # we have a valid token, but first check self.temp_outdent_token
-
-                if self.temp_outdent_token is not None:
-                    if token.value not in ("end", "else", "else_if"):
-                        # this is garbage, then error
-                        if error != "":
-                            error += "<======================================================================>\n"
-                        error += f"Indentation Error in line {self.ln + 1}: Expected one of end"
-                        error += f'{"/else/else_if" * int(self.blocks[-1].header[0].value == "if")}\n'
-                        error += " " * 4 + (self.indent_char * len(self.temp_outdent_token.value))
-                        error += (
-                            self.current_line().value[
-                                len(self.temp_outdent_token.value) :
-                            ]
-                            + "\n"
-                        )
-                        error += (
-                            " " * 4
-                            + " " * len(self.temp_outdent_token.value)
-                            + "^" * len(token.value)
-                        )
-
-                    else: # elif token.value in ("end", "else", "else_if")
-                        self.blocks.pop(-1)  # Pop last block
-
-                        if token.value == "end":
-                            self.end_string = True
-
-                        else:  # elif token.value in ("else", "else_if")
-                            self.blocks.append(  # Push new block (else or else_if)
-
-                                Block(
-                                    header=[token],
-
-                                    header_complete=(
-                                        token.value == "else" # (else) block has no other accompanying condition
-                                        # if this is else, then it's complete, OTHERWISE IT'S NOT
-                                    ),
-
-                                    header_type=(
-                                        Block.SINGLE
-                                        if not self.left_parenthesis_stack  # Multi-lining disabled
-                                        or token.value == "else"  # or it's an (else) block, simple single line header
-                                        else
-                                        Block.MULTI
-                                    ),
-
-                                    header_indent=(
-                                        self.temp_outdent_token
-                                        if not self.temp_outdent_token
-                                        else (
-                                            None
-                                            if not self.indent_stack
-                                            else
-                                            self.indent_token_stack[-1]
-                                        )
-                                    ),
-                                )
-                            )
-
-                        self.tokens_list.append(
-                            self.temp_outdent_token
-                        )  # It's valid after all
-
-                        self.indent_stack.pop(-1)  # Pop last indent
-                        # push new (temp_outdent_token)
-                        self.indent_token_stack.append(self.temp_outdent_token)
-
-                        self.temp_outdent_token: Token = None
-
-                else:  # elif self.temp_outdent_token is None
-                    if token.value in BLOCK_STATEMENTS:
-                        self.blocks.append(
-                            Block(
-                                header=[token],
-
-                                header_complete=(
-                                    token.value == "else" # (else) block has no other accompanying condition
-                                    # if this is else, then it's complete, OTHERWISE IT'S NOT
-                                ),
-
-                                header_type=(
-                                    Block.SINGLE
-                                    if not self.left_parenthesis_stack  # Multi-lining disabled
-                                    or token.value == "else"  # or it's an (else) block, simple single line header
-                                    else
-                                    Block.MULTI
-                                ),
-
-                                header_indent=(
-                                    self.temp_outdent_token
-                                    if not self.temp_outdent_token
-                                    else (
-                                        None
-                                        if not self.indent_stack
-                                        else
-                                        self.indent_token_stack[-1]
-                                    )
-                                ),
-                            )
-                        )
-
                 self.tokens_list.append(token)
-                if self.blocks:
-                    current_block = self.blocks[-1]
-                    if current_block.header_type == Block.SINGLE:  # Single line header
-                        if token.value == "\n":
-                            current_block.header_complete = True
+                if token.name in ("OUTDENT"):
+                    self.indent_token_stack.append(token)
 
-                    current_block.add(token)
-                    del current_block
+                if self.blocks:
+                    self.blocks[-1].add(token)
 
             if error != "":
                 print(error)
