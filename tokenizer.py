@@ -1,9 +1,11 @@
 #!/usr/local/bin/python3.10
 
+from posixpath import abspath
 import re
-from typing import Any, Tuple, List, Dict
+from typing import Tuple, List, Dict
 from dataclasses import dataclass
 from const import *
+from os import path
 
 ####################################################################################################
 
@@ -115,6 +117,7 @@ class Block:
 class Tokenizer:
     def __init__(
         self,
+        file_name:str,
         text: str,  # Text to be tokenized
         indent_type=" ",  # which character to use for indentation,
         # if indent_type.lower() == "s" then we use spaces for indentation
@@ -122,6 +125,7 @@ class Tokenizer:
         indent_size=4,  # How many indent characters in a single indent token
         supplied_spaces_explicitly=False,  # Did you supply --spaces explicitly?
     ):
+        self.file = file_name
         self.text: str = text
         self.current_char: str = ""
         self.idx, self.ln, self.col = 0, 0, 0
@@ -228,7 +232,6 @@ class Tokenizer:
             and not self.checked_indent  # We have not checked indentation in this line
             and len(self.left_parenthesis_stack) == 0  # this is a not a multi-line statement
         ):
-
             self.checked_indent = True
             current_line_object = self.current_line()
             current_line = current_line_object.value
@@ -236,22 +239,11 @@ class Tokenizer:
             first_non_white_space = re.compile(r"[^\s]").search(
                 string=self.text, pos=self.idx, endpos=current_line_line_break
             )
-
             if first_non_white_space is None:
                 # this line is empty or it is just whitespaces
                 steps = len(current_line)
-
-            elif self.blocks and (  # Do checking when we have an active block
-                current_line[0] in (" ", "\t")
-                # Do not check indentation these separators
-                or first_non_white_space.group() not in ("#", ",", ";", ":", ")", "]", '"')
-            ):
-                first_non_white_space = first_non_white_space.start()
-                captured_indent = self.text[self.idx : first_non_white_space]
-
-                # <======================================================================>
-                # ERROR HANDLING
-                opposite_indent_name = "tab" if self.indent_name == "space" else "space"
+            else:
+                captured_indent = self.text[self.idx : first_non_white_space.start()]
 
                 # <======================================================================>
                 # Indenting top level code error
@@ -260,9 +252,10 @@ class Tokenizer:
                     # No active blocks, we are inside no block, we livin' in top level code
                     and not self.blocks
                     # So no active () or [] and no active blocks
-                ) and len(captured_indent) != 0:  # Trying to add an actual indent
+                ) and captured_indent:  # Trying to add an actual indent
                     # Indentation Error: Indenting top-level code
-                    error += f"Indentation Error in line {self.ln + 1}: Indenting top-level code:\n"
+                    error += f"Indentation Error in \"{self.file}\", line {self.ln + 1}:\n"
+                    error += " " * 4 + "Indenting top-level code\n\n"
                     error += " " * 4
                     for c in captured_indent:
                         error += "+" if c == " " else "*"
@@ -274,173 +267,150 @@ class Tokenizer:
                 # Indenting top level code error
                 # <======================================================================>
 
-                # First check this captured_indent is matches self.indent_type
-                # To elaborate, check source code is not using tabs when spaces are enable, or vice versa
-                # And source code is not mixing tabs and spaces some where
-                opposite_type_detected = False
-                if (
-                    "\t" in captured_indent and self.indent_name == "space"
-                ) or (  # Using tabs when indenting with spaces
-                    " " in captured_indent and self.indent_name == "tab"
-                ):  # Using spaces when indenting with tabs
-                    error += f"Indentation Error in line {self.ln + 1}: "
-                    error += f"Using (disabled) {opposite_indent_name}s with (enabled) {self.indent_name}s indentation\n"
-                    error += " " * 4
-                    for c in captured_indent:
-                        error += "+" if c == " " else "*"
-                    error += current_line[len(captured_indent) :] + "\n"
-                    error += " " * 4
-                    illegal_chars = 0
-                    for c in captured_indent:
-                        if c != self.indent_type:
-                            error += "^"
-                            illegal_chars += 1
-                        else:
-                            error += " "
-                    error += "\n"
-                    error += (
-                        "    "
-                        + f"Found {'one' if illegal_chars == 1 else illegal_chars} "
-                    )
-                    error += f"{opposite_indent_name}{'s' * int(illegal_chars != 1)}\n"
-                    error += f"In every INDENT in this file, remove ALL {opposite_indent_name.upper()}S\n"
-                    opposite_type_detected = True
-
-                if opposite_type_detected is False and (
-                    (0 if not self.blocks[-1].header_indent else len(self.blocks[-1].header_indent.value)) < len(captured_indent)
-                    and self.indent_size != 1
-                    and (remaining := len(captured_indent) % self.indent_size) != 0
+                elif self.blocks and (  # Do checking when we have an active block
+                    current_line[0] in (" ", "\t")
+                    # Do not check indentation these separators
+                    or first_non_white_space.group() not in ("#", ",", ";", ":", ")", "]", '"')
                 ):
-                    if error != "":
-                        error += "<======================================================================>\n"
-                    UPPER = self.indent_size * (
-                        len(captured_indent) // self.indent_size
-                    )
-                    error += f"Indentation Error in line {self.ln + 1}:"
-                    error += f"Invalid indent of {remaining} {self.indent_name}{'' if remaining == 1 else 's'}\n"
-                    error += " " * 4 + self.indent_char * len(
-                        captured_indent[UPPER:]
-                    )
-                    error += current_line[len(captured_indent) :] + "\n"
-                    error += " " * 4 + "^" * len(captured_indent[UPPER:]) + "\n"
-                    error += f"Remove {'this' if remaining == 1 else 'these'} {'one' if remaining == 1 else remaining} "
-                    error += f"{self.indent_name}{'' if remaining == 1 else 's'} "
-                    error += f"or add another {'one' if (n:=self.indent_size-remaining) == 1 else n}"
+                    # <======================================================================>
+                    # ERROR HANDLING
+                    opposite_indent_name = "tab" if self.indent_name == "space" else "space"
 
-                if opposite_type_detected is False:
-                    current_block = self.blocks[-1]
+                    # First check this captured_indent is matches self.indent_type
+                    # To elaborate, check source code is not using tabs when spaces are enable, or vice versa
+                    # And source code is not mixing tabs and spaces some where
+                    opposite_type_detected = False
+                    if (
+                        "\t" in captured_indent and self.indent_name == "space"
+                    ) or (  # Using tabs when indenting with spaces
+                        " " in captured_indent and self.indent_name == "tab"
+                    ):  # Using spaces when indenting with tabs
+                        error += f"Indentation Error in \"{self.file}\", line {self.ln + 1}:\n"
+                        error += " " * 4
+                        error += f"Using (disabled) {opposite_indent_name}s with (enabled) {self.indent_name}s indentation\n\n"
+                        error += " " * 4
+                        for c in captured_indent:
+                            error += "+" if c == " " else "*"
+                        error += current_line[len(captured_indent) :] + "\n"
+                        error += " " * 4
+                        illegal_chars = 0
+                        for c in captured_indent:
+                            if c != self.indent_type:
+                                error += "^"
+                                illegal_chars += 1
+                            else:
+                                error += " "
+                        error += "\n"
+                        error += " " * 4 + f"Found {'one' if illegal_chars == 1 else illegal_chars} "
+                        error += f"{opposite_indent_name}{'s' * int(illegal_chars != 1)}\n"
+                        error += f"In every INDENT in this file, remove ALL {opposite_indent_name.upper()}S\n"
+                        opposite_type_detected = True
 
-                    if current_block.header_indent:
-                        current_block_header_indent = len(current_block.header_indent.value)
-                    else:
-                        current_block_header_indent = 0
+                    if opposite_type_detected is False and (
+                        (0 if not self.blocks[-1].header_indent else len(self.blocks[-1].header_indent.value)) < len(captured_indent)
+                        and self.indent_size != 1
+                        and (remaining := len(captured_indent) % self.indent_size) != 0
+                    ):
+                        if error != "":
+                            error += "<======================================================================>\n"
+                        UPPER = self.indent_size * (
+                            len(captured_indent) // self.indent_size
+                        )
+                        error += f"Indentation Error \"{self.file}\", line {self.ln + 1}:\n"
+                        error += " " * 4
+                        error += f"Invalid indent of {remaining} {self.indent_name}{'' if remaining == 1 else 's'}\n\n"
+                        error += " " * 4 + self.indent_char * len(captured_indent[UPPER:])
+                        error += current_line[len(captured_indent) : ] + "\n"
+                        error += " " * 4 + "^" * len(captured_indent[UPPER:]) + "\n"
+                        if re.compile(r"[^\s]+").search(string=current_line).group() in ("end", "if", "else_if", "else"):
+                            error += f"Remove {'this' if remaining == 1 else 'these'} {'one' if remaining == 1 else remaining} "
+                        else:
+                            error += f"Add another {'one' if (n:=self.indent_size-remaining) == 1 else n} "
+                        error += f"{self.indent_name}{'' if remaining == 1 else 's'} "
 
-                    current_block_indent_size = current_block.indent_size
-                    captured_indent_length = len(captured_indent)
+                    if opposite_type_detected is False:
+                        current_block = self.blocks[-1]
 
-                    if current_block.indent_size:
-                            # <======================================================================>
-                            # this block has at least one statement, something like this
-                            # if x == 0
-                            #     pass
-                            # end
-                            # maybe not indented correctly
-                            # <======================================================================>
+                        if current_block.header_indent:
+                            current_block_header_indent = len(current_block.header_indent.value)
+                        else:
+                            current_block_header_indent = 0
 
-                            if captured_indent_length < current_block_header_indent:
-                                if captured_indent_length < current_block_indent_size:
-                                    pass
-
-                            elif captured_indent_length == current_block_header_indent:
-                                pass
-
-                            # elif current_block_header_indent > captured_indent_length
-                            elif captured_indent_length < current_block_header_indent:
-                                pass
-
-                    else: # elif current_block.indent_size is None
-                        # this block HAS NO statements
-                        # something like
-                        # if x == 0
-                        # end
-
-                        # or something like
-                        #     if x == 0
-                        # end
-
-                        if len(captured_indent) <= current_block_header_indent:
+                        next_thing = re.compile(r"[^\s]+").search(string=current_line).group()
+                        if (
+                            current_block.indent_size
+                            and
+                            len(captured_indent) <= current_block_header_indent
+                            and
+                            next_thing not in ("end", "else", "else_if")
+                        ):
                             if error:
                                 error += "<======================================================================>\n"
-                            next_thing = re.compile(r"[^\s]+").search(string=current_line);
-                            start = next_thing.start()
-                            next_thing = next_thing.group()
-                            if next_thing in ("end", "else", "else_if"):
-                                if len(captured_indent) < current_block_header_indent:
-                                    error += f"Syntax Error in line {self.ln + 1}: Outdented (end) and no (pass) statement\n"
-                                    error += " " * 4 + self.indent_char * current_block_header_indent
-                                    error += current_block.header_string[current_block_header_indent:]
-                                    error += " " * 4 + self.current_line_indented() + "\n"
-                                    error += " " * 4 + " " * self.col + "^" * len(next_thing) + "\n"
-                                    error += "Indent (end) and add (pass) as shown below:\n"
-                                    error += " " * 4 + self.indent_char * current_block_header_indent
-                                    error += current_block.header_string[current_block_header_indent:]
-                                    error += " " * 4 + " " * current_block_header_indent + self.indent_char * self.indent_size + "pass" + "\n"
-                                    error += " " * 4
-                                    error += self.indent_char * current_block_header_indent + "end" + "\n"
-                                else: # elif len(captured_indent) == current_block_header_indent
-                                    error += f"Syntax Error in line {self.ln + 1}: Missing (pass) statement\n"
-                                    error += " " * 4 + self.indent_char * current_block_header_indent
-                                    error += current_block.header_string[current_block_header_indent:]
-                                    error += " " * 4 + self.current_line_indented() + "\n"
-                                    error += "Add (pass) as show below:\n"
-                                    error += " " * 4 + self.indent_char * current_block_header_indent
-                                    error += current_block.header_string[current_block_header_indent:]
-                                    error += " " * 4 + self.indent_char * current_block_header_indent
-                                    error += self.indent_char * self.indent_size + "pass" + "\n"
-                                    error += " " * 4
-                                    error += self.indent_char * current_block_header_indent + "end" + "\n"
-                            else:
-                                # some garbage
-                                # if x == 0
-                                # print
-                                pass
-                            del start, next_thing
-                # ERROR HANDLING DONE
-                # <======================================================================>
 
-                if error == "":
-                    # No errors
-                    if len(self.indent_stack) == 0:
-                        current_indent_level = 0
-                    else:
-                        current_indent_level = self.indent_stack[-1]
+                            error += f"Indentation Error in \"{self.file}\", line {self.ln + 1}\n"
+                            error += " " * 4
+                            error += "Unexpected indentation\n\n"
+                            error += " " + current_line + "\n" + " " * len(captured_indent) + "^" + "\n"
+                            error += f"Indentation level in line {self.ln + 1} "
+                            error += f"(level {len(captured_indent)//self.indent_size}) "
+                            error += "does not match current block indentation level "
+                            error += f"(level {current_block.indent_size//self.indent_size})"
 
-                    begin = self.pos()
-                    token = Token(value=captured_indent, begin=begin)
-                    token.end = Pos(
-                        begin.idx + len(captured_indent),
-                        begin.col + len(captured_indent),
-                        self.ln,
-                    )
-                    if current_indent_level < len(captured_indent):
-                        # INDENT
-                        self.indent_stack.append(
-                            len(captured_indent)
-                        )  # Use captured_indent length to 0, 4, 8, 12, ... (indent_size 4)
+                        elif (
+                            not current_block.indent_size
+                            and
+                            len(captured_indent) <= current_block_header_indent
+                        ):
+                            if error:
+                                error += "<======================================================================>\n"
+                            error += f"Indentation Error in \"{self.file}\", line {self.ln + 1}\n"
+                            error += " " * 4
+                            error += "Expected indentation\n\n"
+                            error += " " + current_line + "\n" + " " * len(captured_indent) + "^" + "\n"
+                            error += f"Expected indentation level {current_block_header_indent // self.indent_size + 1} "
+                            error += f"but found level {len(captured_indent) // self.indent_size}"
 
-                        self.blocks[-1].indent_size = len(
-                            captured_indent
-                        )  # JUST IGNORE THIS TYPE-CHECKING ERROR
+                    # ERROR HANDLING DONE
+                    # <======================================================================>
 
-                        token.name = "INDENT"
-                        self.indent_token_stack.append(token)
-                    else:
-                        # no indent or outdent, make token None
-                        token = None
+                    if error == "":
+                        # No errors
+                        if len(self.indent_stack) == 0:
+                            current_indent_level = 0
+                        else:
+                            current_indent_level = self.indent_stack[-1]
 
-                    steps = len(captured_indent)
-            else:
-                return "", None  # JUST IGNORE THIS TYPE-CHECKING ERROR
+                        begin = self.pos()
+                        token = Token(value=captured_indent, begin=begin)
+                        token.end = Pos(
+                            begin.idx + len(captured_indent),
+                            begin.col + len(captured_indent),
+                            self.ln,
+                        )
+                        if len(captured_indent) < current_indent_level:
+                            # OUTDENT
+                            self.indent_stack.pop(-1)
+                            token.name = "OUTDENT"
+                            self.indent_token_stack.append(token)
+                        elif current_indent_level < len(captured_indent):
+                            # INDENT
+                            self.indent_stack.append(
+                                len(captured_indent)
+                            )  # Use captured_indent length to 0, 4, 8, 12, ... (indent_size 4)
+
+                            self.blocks[-1].indent_size = len(
+                                captured_indent
+                            )  # JUST IGNORE THIS TYPE-CHECKING ERROR
+
+                            token.name = "INDENT"
+                            self.indent_token_stack.append(token)
+                        else:
+                            # no indent or outdent, make token None
+                            token = None
+
+                        steps = len(captured_indent)
+                else:
+                    return "", None  # JUST IGNORE THIS TYPE-CHECKING ERROR
 
         elif self.current_char == "\n":
             # LINE_BREAK
@@ -497,7 +467,8 @@ class Tokenizer:
                 # FOUND " with no matching "
                 if error != "":
                     error += "<======================================================================>\n"
-                error += f'Syntax Error in line {self.ln + 1}: Unclosed "\n'
+                error += f"Syntax Error in \"{self.file}\", line {self.ln + 1}\n"
+                error += " " * 4 + "Unclosed \"\n\n"
                 current_line = self.current_line().value
                 error += " " * 4 + current_line + "\n"
                 error += " " * 4 + " " * self.col + "^"
@@ -527,7 +498,8 @@ class Tokenizer:
                         ): # multi-ling is not allowed with (end)
                             if error:
                                 error += "<======================================================================>\n"
-                            error += f"Error in line {self.ln + 1}: Multi-lined end statement\n"
+                            error += f"Error in \"{self.file}\", line {self.ln + 1}:\n"
+                            error += " " * 4 + "Multi-lined end statement\n\n"
                             tok = self.left_parenthesis_stack[-1]
                             width = len(str(self.ln))
                             error += f"{tok.begin.ln:^{width}}:" + " " * 4 + self.lines[tok.begin.ln].value + "\n"
@@ -555,7 +527,8 @@ class Tokenizer:
                             # end
                             if error != "":
                                 error += "<======================================================================>\n"
-                            error += f"Error in line {self.ln + 1}: Multi-lining with block headers\n"
+                            error += f"Error in \"{self.file}\", line {self.ln + 1}:\n"
+                            error += " " * 4 + "Multi-lining with block headers\n\n"
                             left_par_tok = self.left_parenthesis_stack[-1]
                             left_par_line = left_par_tok.begin.ln
                             width = max(
@@ -636,9 +609,8 @@ class Tokenizer:
                 first_non_white_space = (
                     re.compile(r"[^\s]").match(string=current_line).start()
                 )
-                error += (
-                    f"Syntax Error in line {self.ln + 1}: Unexpected {sep.group()}\n"
-                )
+                error += f"Syntax Error in\"{self.file}\" line {self.ln + 1}:\n"
+                error += " " * 4 + f"Unexpected {sep.group()}\n\n"
                 error += " " * 4 + "".join(
                     "+" if c == " " else "*"
                     for c in current_line[:first_non_white_space]
@@ -668,7 +640,8 @@ class Tokenizer:
                     if self.end_string:
                         if error:
                             error += "<======================================================================>\n"
-                        error += f"Error in line {self.ln + 1}: Multi-lined end statement\n"
+                        error += f"Error in \"{self.file}\", line {self.ln + 1}:\n"
+                        error += " " * 4 + "Multi-lined end statement\n\n"
                         error += " " * 4 + self.current_line().value + "\n"
                         error += f"Remove ( and above"
                     else:
@@ -681,7 +654,8 @@ class Tokenizer:
                     if self.end_string:
                         if error:
                             error += "<======================================================================>\n"
-                        error += f"Error in line {self.ln + 1}: Multi-lined end statement\n"
+                        error += f"Error in \"{self.file}\", line {self.ln + 1}:\n"
+                        error += " " * 4 + "Multi-lined end statement\n\n"
                         tok = self.left_parenthesis_stack[-1]
                         for n in range(tok.begin.ln, self.ln+1):
                             error += " " * 4 + self.lines[n].value + "\n"
@@ -781,8 +755,10 @@ if __name__ == "__main__":
     # Source code
     if args.file:
         source = open(args.file).read()
+        file = path.abspath(args.file)
     else:
         source = args.source
+        file = "<stdin>"
 
     # Indent type
     if (
@@ -831,6 +807,7 @@ if __name__ == "__main__":
         exit(0)
 
     tokenizer = Tokenizer(
+        file_name = file,
         text=source,
         indent_type=indent,
         indent_size=size,
