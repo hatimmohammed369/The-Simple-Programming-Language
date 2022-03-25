@@ -213,7 +213,7 @@ class Tokenizer:
         else:
             self.current_char = ""
 
-        if steps == 1 and self.text[self.idx - 1] == "\n":
+        if steps == 1 and self.text[self.idx - 1] == "\n" and self.idx < len(self.text):
             self.last_line_break_index = self.idx - 1
             self.checked_indent = False
             self.col = 0
@@ -392,6 +392,7 @@ class Tokenizer:
                             self.indent_stack.pop(-1)
                             token.name = "OUTDENT"
                             self.indent_token_stack.append(token)
+                            self.blocks.pop(-1)
                         elif current_indent_level < len(captured_indent):
                             # INDENT
                             self.indent_stack.append(
@@ -702,13 +703,12 @@ class Tokenizer:
         return error, token  # JUST IGNORE THIS TYPE-CHECKING ERROR
 
     def tokenize(self):
+        error = ""
         while self.current_char != "":
             error, token = self.next_token()
 
             if token is not None:
                 self.tokens_list.append(token)
-                if token.name in ("OUTDENT"):
-                    self.indent_token_stack.append(token)
 
                 if self.blocks:
                     self.blocks[-1].add(token)
@@ -716,6 +716,42 @@ class Tokenizer:
             if error != "":
                 print(error)
                 exit(0)
+
+        if self.left_parenthesis_stack:
+            if error:
+                error += "<======================================================================>\n"
+
+            error += "Syntax Error in \"{self.file}\", line {self.ln}:\n"
+            error += " " * 4 + "Unclosed (\n\n"
+            error += self.lines[self.left_parenthesis_stack[-1].begin.ln].value
+            error += " " * self.left_parenthesis_stack[-1].begin.col + "\n"
+
+        if self.blocks:
+            if error:
+                error += "<======================================================================>\n"
+
+            current_block = self.blocks[-1]
+            if current_block.indent_size:
+                error += "Syntax Error in \"{self.file}\", line {self.ln}:\n"
+                error += " " * 4 + f"Expected 'end'\n\n"
+                error += current_block.header_string
+                error += (" " * self.indent_size + ".\n") * 3
+                if not current_block.header_indent:
+                    header = ""
+                else:
+                    header = current_block.header_indent.value
+                error += " " * len(header) + "end" + "\n"
+                error += " " * len(header) + "^^^" + "\n"
+                error += " " * len(header) + "Add 'end' like shown above" + "\n"
+            else:
+                error += "Indentation Error in \"{self.file}\", line {self.ln}:\n"
+                error += " " * 4 + f"Expected indented block after '{current_block.header_name}'\n\n"
+                error += self.current_line().value + "\n" + " " * current_block.header[0].begin.col
+                error += "^" * len(current_block.header_name) + "\n"
+
+        if error:
+            print(error)
+            exit(0)
 
         # end "while self.current_char != "" "
         self.done = True
