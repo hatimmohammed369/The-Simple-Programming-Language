@@ -2,7 +2,7 @@
 
 import re
 from typing import Any, Union
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from const import *
 
 ####################################################################################################
@@ -26,8 +26,8 @@ class Pos:
 class Token:
     name: str = ""
     value: Any = object()
-    begin: Pos = Pos()
-    end: Pos = Pos()
+    begin: Pos = field(default_factory=Pos)
+    end: Pos = field(default_factory=Pos)
 
     def __repr__(self):
         self_idx = f"{self.begin.idx}-{self.end.idx}"
