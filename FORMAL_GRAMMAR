@@ -1,0 +1,164 @@
+# *      =>  0 or more
+# +      =>  1 or more
+# [xyz]  =>  xyz is optional
+# () are used for grouping
+# anything between '' is denotes just itself, so '(' denotes an actual ( written in code
+
+KEYWORDS: 'module' | 'static' | 'struct' | 'end'
+	  'define' | 'var' | 'const' | 'ref' | 'deref'
+	  'int' | 'float' | 'string' | 'bool' | 'nothing'
+	  'not' | 'and' | 'or' | 'true' | 'false' | 'array' |
+	  'function' | 'return' | 'if' | 'else' | 'else_if' |
+	  'for' | 'while' | 'break' | 'continue' | 'pass' | 'self'
+
+
+MODULE: 'module' NAME ';' LINE_BREAK STATEMENT*
+
+
+STATEMENT: ( SIMPLE_STATEMENT ( ';' | LINE_BREAK | ';' LINE_BREAK ) ) | ( COMPOUND_STATEMENT LINE_BREAK )
+
+
+SIMPLE_STATEMENT: 'pass' | 'break' | 'continue' | RETURN_STATEMENT | EXPRESSION_STATEMENT
+
+
+RETURN_STATEMENT: 'return' EXPRESSION_STATEMENT
+
+
+EXPRESSION_STATEMENT: SIMPLE_EXPRESSION | COMPOUND_EXPRESSION | '(' EXPRESSION_STATEMENT ')'
+
+
+SIMPLE_EXPRESSION: NAME | LITERAL
+
+
+LITERAL: 'true' | 'false' | 'nothing' | NUMBER_EXPRESSION | STRING
+
+
+NUMBER_EXPRESSION: [ '-' ] ( INTEGER | REAL_NUMBER | NUMBER_EXPRESSION )
+
+
+INTEGER: NEGATIVE_INTEGER | '0' | POSITIVE_INTEGER | ( [ '-' ] INTEGER )
+
+
+NEGATIVE_INTEGER: '-' POSITIVE_INTEGER
+
+
+NON_NEGATIVE_INTEGER: '0' | POSITIVE_INTEGER
+
+
+REAL_NUMBER: INTEGER | '.' POSITIVE_INTEGER | ( INTEGER '.' POSITIVE_INTEGER [ ( 'e' | 'E' ) [ '-' | '+' ] POSITIVE_INTEGER ] ) |
+	     ( INTEGER '.' ( 'e' | 'E' ) [ '-' | '+' ] POSITIVE_INTEGER )
+
+
+COMPOUND_EXPRESSION: ARRAY_SUBSCRIPTION | FUNCTION_CALL | CONST_VAR_DEFINITION | OPERATOR_EXPRESSION
+
+
+ARRAY_SUBSCRIPTION: ARRAY_EXPRESSION '[' NON_NEGATIVE_INTEGER ']'
+# ARRAY_EXPRESSION is something that returns an array, an actual array or a function call
+
+
+FUNCTION_CALL: FUNCTION_EXPRESSION '(' [ EXPRESSIONS_LIST ] ')'
+# FUNCTION_EXPRESSION is something that returns a function, an actual function or (obj.func_name)
+
+
+EXPRESSIONS_LIST: ( EXPRESSION ( ',' EXPRESSION )* ) | ( '(' EXPRESSION ( ',' EXPRESSION )* ')' )
+
+
+CONST_VAR_DEFINITION: [ 'static' ] 'define' ( NAME_TYPE_EXPRESSION_GROUP ';' )+
+
+
+TYPE: [ 'const' | 'var' ] ( USER_DEFINED_TYPE | PRIMITIVE_DATA_TYPE ) [ '&' ]
+
+
+PRIMITIVE_DATA_TYPE: 'nothing' | 'int' | 'float' | 'string' | 'bool' | ARRAY_TYPE
+
+
+ARRAY_TYPE: 'array' '[' POSITIVE_INTEGER ':' TYPE ']'
+
+
+OPERATOR_EXPRESSION: UNARY_OPERATOR_EXPRESSION | BINARY_OPERATOR_EXPRESSION
+
+
+UNARY_OPERATOR: '-' | '~' | 'ref' | 'deref'
+
+
+BINARY_OPERATOR: '==' | '!=' | '<' | '<=' | '>' | '>=' |
+		 'not' | 'and' | 'or' | '+' | '-' | '*' | '**' | '/' |
+		 ':=' | '=' | '+=' | '-=' | '*=' | '/=' |
+		 '~=' | '&=' | '|=' | '^=' | '>>=' | '<<=' | '.'
+
+
+UNARY_OPERATOR_EXPRESSION: REF_EXPRESSION | UNIARY_BOOLEAN_EXPRESSION | NEGATION_EXPRESSION | BITWISE_OR_EXPRESSION
+
+
+REF_EXPRESSION: ( 'ref' | 'deref' ) NAME
+
+
+UNARY_BOOLEAN_EXPRESSION: 'not' BOOLEAN_EXPRESSION
+
+
+NEGATION_EXPRESSION: '-' NUMBER_EXPRESSION
+
+
+BITWISE_OR_EXPRESSION: '~' NUMBER_EXPRESSION
+
+
+BINARY_OPERATOR_EXPRESSION: ATTRIBUTE_ACCESS_EXPRESSION | BOOLEAN_EXPRESION | ARITHMETIC_EXPRESSION | ASSINGMENT_EXPRESSION
+
+
+ATTRIBUTE_ACCESS_EXPRESSION : STRUCT_EXPRESSION '.' NAME
+# A STRUCT_EXPRRESSION is something that returns a struct object, like a call to constructor or a function call
+
+
+BOOLEAN_EXPRESSION: BINARY_BOOLEAN_EXPRESSION | UNARY_BOOLEAN_EXPRESSION
+
+
+BINARY_BOOLEAN_EXPRESSION: BOOLEAN_EXPRESSION BINARY_BOOLEAN_OPERATOR BOOLEAN_EXPRESSION
+
+
+BINARY_BOOLEAN_OPERATOR: '==' | '!=' | '<' | '>' | 'and' | 'or'
+
+
+ASSINGMENT_EXPRESSION: NAME_LIST ( '=' | '+=' | '-=' | '*=' | '/=' | '~=' | '&=' | '|=' | '^=' | '>>=' | '<<=' ) EXPRRESSION_LIST
+
+
+COMPOUND_STATEMENT: FUNCTION_STATEMENT | IF_STATEMENT | FOR_STATEMENT | WHILE_STATEMENT | STRUCT_STATEMENT
+
+
+FUNCTION_STATEMENT: 'function' NAME '(' PARAMETERS_LIST ')' [ ':' TYPE ] BLOCK END_STATEMENT
+
+
+PARAMETERS_LIST: ( PARAMETER ( ',' PARAMETER )* ) | ( '(' PARAMETER ( ',' PARAMETER )* ')' )
+
+
+PARAMETER: NAME_TYPE_EXPRESSION_GROUP
+# The part [ ':=' EXPRESSION  ] is for default values
+
+
+NAME_TYPE_EXPRESSION_GROUP: NAME ':' TYPE [ ':=' EXPRESSION ]
+
+
+BLOCK: INDENT STATEMENT+ OUTDENT
+
+
+END_STATEMENT: 'end' STRING
+
+
+IF_STATEMENT: 'if' EXPRESSION BLOCK ( 'else_if' BLOCK )* [ 'else' BLOCK ] END_STATEMENT
+
+
+FOR_STATEMENT: 'for' NAME_LIST 'in' ARRAY_EXPRESSION_LIST BLOCK END_STATEMENT
+
+
+NAME_LIST: ( NAME ( ',' NAME )* ) | ( '(' NAME ( ',' NAME )* ')' )
+
+
+ARRAY_EXPRESSION_LIST : ( ARRAY_EXPRESSION ( ',' ARRAY_EXPRESSION )* ) | ( '(' ARRAY_EXPRESSION ( ',' ARRAY_EXPRESSION )* ')' )
+
+
+WHILE_STATEMENT: 'while' EXPRESSION BLOCK END_STATEMENT
+
+
+STRUCT_STATEMENT: 'struct' NAME ':' STRUCT_BLOCK END_STATEMENT
+
+
+STRUCT_BLOCK: INDENT ( CONST_VAR_DEFINITION | FUNCTION_STATEMENT )+ OUTDENT
